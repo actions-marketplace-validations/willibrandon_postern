@@ -141,10 +141,15 @@ jobs:
           name: postern-linux-x64
           path: artifacts/binaries
       - run: chmod 755 artifacts/binaries/postern_linux_x86_64
+      - name: Build the tree-sitter parser
+        run: |
+          git clone --depth 1 https://github.com/willibrandon/tree-sitter-postgresql-conf "$RUNNER_TEMP/grammar"
+          cc -shared -fPIC -I"$RUNNER_TEMP/grammar/src" "$RUNNER_TEMP/grammar/src/parser.c" -o "$RUNNER_TEMP/postgresql_conf.so"
       - name: Run the busted specs
         working-directory: editors/nvim
         env:
           POSTERN_BIN: ${{ github.workspace }}/artifacts/binaries/postern_linux_x86_64
+          POSTERN_PARSER: ${{ runner.temp }}/postgresql_conf.so
         run: nvim -l tests/minit.lua --busted
 
   fresh:
@@ -162,3 +167,34 @@ jobs:
         working-directory: editors/fresh
       - run: npm run check-types
         working-directory: editors/fresh
+
+  queries:
+    name: Editor queries
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: git clone --depth 1 https://github.com/willibrandon/tree-sitter-postgresql-conf "$RUNNER_TEMP/grammar"
+      - name: Check every query file against the grammar
+        working-directory: ${{ runner.temp }}/grammar
+        run: |
+          for query in "$GITHUB_WORKSPACE"/editors/nvim/queries/postgresql_conf/*.scm \
+                       "$GITHUB_WORKSPACE"/editors/helix/queries/postgresql-conf/*.scm \
+                       "$GITHUB_WORKSPACE"/editors/zed/languages/postgresql-conf/*.scm; do
+            echo "$query"
+            npx --yes tree-sitter-cli query "$query" "$GITHUB_WORKSPACE"/test/fixtures/pg_hba.conf --quiet
+          done
+
+  zed:
+    name: Zed extension
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup target add wasm32-wasip2
+      - run: cargo build --release --target wasm32-wasip2
+        working-directory: editors/zed

@@ -1,0 +1,13 @@
+[package]
+name = "zed_postern"
+version = "0.1.6"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[lib]
+path = "src/postern.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+zed_extension_api = "0.7"

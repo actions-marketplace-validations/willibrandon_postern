@@ -41,8 +41,10 @@ lazy.nvim:
 { dir = "~/src/postern/editors/nvim" }
 ```
 
-It gives the four files their filetypes and enables the server, which must be on your `PATH`.
-See [editors/nvim/README.md](editors/nvim/README.md).
+It gives the four files their filetypes, enables the server, which must be on your `PATH`, and
+registers the [tree-sitter grammar](https://github.com/willibrandon/tree-sitter-postgresql-conf)
+so `:TSInstall postgresql_conf` gives them highlighting and text objects. See
+[editors/nvim/README.md](editors/nvim/README.md).
 
 ### Fresh
 
@@ -52,16 +54,15 @@ the server, which must be on your `PATH`. See [editors/fresh/README.md](editors/
 
 ### Helix
 
-```toml
-[language-server.postern]
-command = "postern"
+Append [editors/helix/languages.toml](editors/helix/languages.toml) to your `languages.toml`, put
+its queries under `runtime/queries/postgresql-conf`, then `hx --grammar fetch` and
+`hx --grammar build`. See [editors/helix/README.md](editors/helix/README.md).
 
-[[language]]
-name = "postgresql-conf"
-scope = "source.postgresql-conf"
-file-types = [{ glob = "postgresql.conf" }, { glob = "postgresql.auto.conf" }, { glob = "pg_hba.conf" }, { glob = "pg_ident.conf" }]
-language-servers = ["postern"]
-```
+### Zed
+
+Install [editors/zed](editors/zed) as a dev extension. It highlights the four files and downloads
+the server for your platform when `postern` is not on your `PATH`. See
+[editors/zed/README.md](editors/zed/README.md).
 
 ## Command line
 

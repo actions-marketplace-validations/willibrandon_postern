@@ -1,0 +1,22 @@
+# Postern for Helix. Append this to ~/.config/helix/languages.toml, or run
+# scripts/install-local.sh from a checkout, then `hx --grammar fetch` and
+# `hx --grammar build`.
+
+[language-server.postern]
+command = "postern"
+
+[[language]]
+name = "postgresql-conf"
+scope = "source.postgresql-conf"
+file-types = [
+  { glob = "postgresql.conf" },
+  { glob = "postgresql.auto.conf" },
+  { glob = "pg_hba.conf" },
+  { glob = "pg_ident.conf" },
+]
+comment-token = "#"
+language-servers = ["postern"]
+
+[[grammar]]
+name = "postgresql-conf"
+source = { git = "https://github.com/willibrandon/tree-sitter-postgresql-conf", rev = "main" }

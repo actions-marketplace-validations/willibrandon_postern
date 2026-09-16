@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+- A tree-sitter grammar, [tree-sitter-postgresql-conf](https://github.com/willibrandon/tree-sitter-postgresql-conf),
+  with editor packages that use it: the Neovim plugin registers it for `:TSInstall` and ships
+  queries, `editors/helix` has a `languages.toml` entry and queries, and `editors/zed` is an
+  extension that also fetches the server from the latest release.
+
 ## [0.1.6] - 2026-09-16
 
 - A Neovim plugin in `editors/nvim` for Neovim 0.11 or newer: filetypes for the four files and
