@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.6] - 2026-09-16
 
 - A Neovim plugin in `editors/nvim` for Neovim 0.11 or newer: filetypes for the four files and
   the server enabled through Neovim's own client, with no nvim-lspconfig needed.

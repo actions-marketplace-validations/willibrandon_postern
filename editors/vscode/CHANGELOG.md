@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.6] - 2026-09-16
+
+- Bundles server 0.1.6, which applies edits sent as ranges and handles the trust quick fix command
+  itself. Neither changes anything for VS Code, which sends full text and runs the quick fix on its
+  own.
+
 ## [0.1.5] - 2026-09-16
 
 - Lines the server writes to stderr are logged at their own level. The wrapper's "Uninstalled older
