@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- The server advertises its commands, which Zed and Neovim require before they will run a code
+  action's command, and finds trust hints in the requested range itself instead of relying on
+  the diagnostics a client sends back.
 - A tree-sitter grammar, [tree-sitter-postgresql-conf](https://github.com/willibrandon/tree-sitter-postgresql-conf),
   with editor packages that use it: the Neovim plugin registers it for `:TSInstall` and ships
   queries, `editors/helix` has a `languages.toml` entry and queries, and `editors/zed` is an

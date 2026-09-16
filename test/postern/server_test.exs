@@ -127,6 +127,73 @@ defmodule Postern.ServerTest do
       :ok
     end
 
+    test "the commands are advertised", %{client: client} do
+      request(client, %{
+        "jsonrpc" => "2.0",
+        "id" => 302,
+        "method" => "initialize",
+        "params" => %{"processId" => nil, "rootUri" => nil, "capabilities" => %{}}
+      })
+
+      assert_result(302, %{
+        "capabilities" => %{"executeCommandProvider" => %{"commands" => commands}}
+      })
+
+      assert "postern.disableTrustHints" in commands
+      assert "postern.reloadConfig" in commands
+    end
+
+    test "the trust quick fix is offered without diagnostics in the request", %{client: client} do
+      uri = "file:///etc/pg_hba.conf"
+
+      notify(client, %{
+        "jsonrpc" => "2.0",
+        "method" => "textDocument/didOpen",
+        "params" => %{
+          "textDocument" => %{
+            "uri" => uri,
+            "languageId" => "conf",
+            "version" => 1,
+            "text" => "local all all peer\nhost all all 10.0.0.0/8 trust\n"
+          }
+        }
+      })
+
+      assert_notification("textDocument/publishDiagnostics", %{"uri" => ^uri})
+
+      request(client, %{
+        "jsonrpc" => "2.0",
+        "id" => 303,
+        "method" => "textDocument/codeAction",
+        "params" => %{
+          "textDocument" => %{"uri" => uri},
+          "range" => %{
+            "start" => %{"line" => 1, "character" => 0},
+            "end" => %{"line" => 1, "character" => 0}
+          },
+          "context" => %{"diagnostics" => []}
+        }
+      })
+
+      assert_result(303, [%{"command" => %{"command" => "postern.disableTrustHints"}}])
+
+      request(client, %{
+        "jsonrpc" => "2.0",
+        "id" => 304,
+        "method" => "textDocument/codeAction",
+        "params" => %{
+          "textDocument" => %{"uri" => uri},
+          "range" => %{
+            "start" => %{"line" => 0, "character" => 0},
+            "end" => %{"line" => 0, "character" => 0}
+          },
+          "context" => %{"diagnostics" => []}
+        }
+      })
+
+      assert_result(304, [])
+    end
+
     test "postern.disableTrustHints stops the hint for open pg_hba.conf files", %{client: client} do
       uri = "file:///etc/pg_hba.conf"
 

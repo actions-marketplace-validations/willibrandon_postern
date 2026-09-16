@@ -29,6 +29,7 @@ defmodule Postern.Server do
   alias GenLSP.Requests.TextDocumentInlayHint
   alias GenLSP.Requests.WorkspaceExecuteCommand
   alias GenLSP.Structures.CompletionOptions
+  alias GenLSP.Structures.ExecuteCommandOptions
   alias GenLSP.Structures.InitializeParams
   alias GenLSP.Structures.InitializeResult
   alias GenLSP.Structures.PublishDiagnosticsParams
@@ -117,7 +118,8 @@ defmodule Postern.Server do
         hover_provider: true,
         completion_provider: %CompletionOptions{trigger_characters: [".", "="]},
         inlay_hint_provider: true,
-        code_action_provider: true
+        code_action_provider: true,
+        execute_command_provider: %ExecuteCommandOptions{commands: Features.commands()}
       },
       server_info: %{name: @server_name, version: version()}
     }
@@ -181,7 +183,15 @@ defmodule Postern.Server do
         LiveFeatures.code_actions(uri, snapshot)
       end)
 
-    {:reply, Features.code_actions(params.context.diagnostics || []) ++ live, lsp}
+    diagnostics =
+      trust_diagnostics(
+        lsp,
+        params.text_document.uri,
+        params.context.diagnostics || [],
+        params.range
+      )
+
+    {:reply, Features.code_actions(diagnostics) ++ live, lsp}
   end
 
   # The quick fix on a trust hint. Handling it here means it works from any
@@ -281,6 +291,34 @@ defmodule Postern.Server do
   end
 
   defp publish_diagnostics(lsp, uri, text, version) do
+    GenLSP.notify(lsp, %TextDocumentPublishDiagnostics{
+      params: %PublishDiagnosticsParams{
+        uri: uri,
+        version: version,
+        diagnostics: document_diagnostics(lsp, uri, text)
+      }
+    })
+  end
+
+  # Clients differ in which diagnostics they send back with a code action
+  # request, so the trust hints in the range come from the document itself
+  # when the request carries none.
+  defp trust_diagnostics(lsp, uri, context, range) do
+    with false <- Enum.any?(context, &Features.trust_diagnostic?/1),
+         %{text: text, kind: :pg_hba_conf} <- DocumentStore.get(lsp, uri) do
+      hints =
+        document_diagnostics(lsp, uri, text)
+        |> Enum.filter(&(Features.trust_diagnostic?(&1) and overlaps?(&1.range, range)))
+
+      context ++ hints
+    else
+      _ -> context
+    end
+  end
+
+  defp overlaps?(a, b), do: a.start.line <= b.end.line and a.end.line >= b.start.line
+
+  defp document_diagnostics(lsp, uri, text) do
     initialization_options = Map.get(current_assigns(lsp), :initialization_options, %{})
 
     base_options =
@@ -295,12 +333,7 @@ defmodule Postern.Server do
       |> Map.put(:live_snapshot, live_snapshot)
       |> Map.put(:live_configured, LiveOracle.connection_options(base_options) != nil)
 
-    diagnostics =
-      Diagnostics.for_document(uri, text, options)
-
-    GenLSP.notify(lsp, %TextDocumentPublishDiagnostics{
-      params: %PublishDiagnosticsParams{uri: uri, version: version, diagnostics: diagnostics}
-    })
+    Diagnostics.for_document(uri, text, options)
   end
 
   # Inlay hints and code actions describe settings, so only postgresql.conf

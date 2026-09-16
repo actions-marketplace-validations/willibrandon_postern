@@ -29,13 +29,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand("postern.showOutput", (): void => {
       output.show(true);
     }),
-    // Offered as a quick fix on the hint; the settings listener restarts the server.
-    vscode.commands.registerCommand("postern.disableTrustHints", async (): Promise<void> => {
-      await vscode.workspace
-        .getConfiguration("postern")
-        .update("hba.reportTrust", false, vscode.ConfigurationTarget.Global);
-      output.info("Trust hints turned off in user settings (postern.hba.reportTrust).");
-    }),
     vscode.workspace.onDidChangeConfiguration((event): void => {
       if (!affectsServer(event)) return;
       void (async (): Promise<void> => {

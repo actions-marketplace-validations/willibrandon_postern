@@ -57,8 +57,15 @@ defmodule Postern.Features do
     end
   end
 
-  defp trust_diagnostic?(%{source: "postern", code: "trust"}), do: true
-  defp trust_diagnostic?(_diagnostic), do: false
+  @doc "Whether a diagnostic is the hint about trust on a non-local rule."
+  def trust_diagnostic?(%{source: "postern", code: "trust"}), do: true
+  def trust_diagnostic?(_diagnostic), do: false
+
+  @doc """
+  Every command a code action can carry. Advertised at initialize, because
+  Zed and Neovim run only commands the server lists.
+  """
+  def commands, do: ["postern.disableTrustHints" | Postern.LiveFeatures.commands()]
 
   @doc "Returns completion items for a document position."
   @spec completion(String.t(), String.t(), Position.t(), map() | keyword()) :: CompletionList.t()

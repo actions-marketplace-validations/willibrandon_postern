@@ -62,6 +62,10 @@ defmodule Postern.LiveFeatures do
     }
   end
 
+  @doc "The commands the live code actions carry."
+  def commands,
+    do: ["postern.applyAlterSystem", "postern.reloadConfig", "postern.showEffectiveValue"]
+
   defp action(title, command, uri) do
     %CodeAction{
       title: title,

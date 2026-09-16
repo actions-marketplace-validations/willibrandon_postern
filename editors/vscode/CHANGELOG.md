@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+- The trust quick fix command is registered by the language client, since the server now advertises
+  it, and handled through the client's middleware. It still saves the setting.
+
 ## [0.1.6] - 2026-09-16
 
 - Bundles server 0.1.6, which applies edits sent as ranges and handles the trust quick fix command

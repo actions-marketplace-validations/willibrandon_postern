@@ -1,5 +1,9 @@
 import * as vscode from "vscode";
-import type { DocumentSelector, LanguageClientOptions } from "vscode-languageclient";
+import type {
+  DocumentSelector,
+  ExecuteCommandSignature,
+  LanguageClientOptions,
+} from "vscode-languageclient";
 
 export const outputChannelName = "Postern Language Server";
 
@@ -32,6 +36,23 @@ export function clientOptions(output: vscode.LogOutputChannel): LanguageClientOp
     initializationOptions: initializationOptions(),
     outputChannel: output,
     markdown: { isTrusted: false },
+    middleware: {
+      // The server advertises this command so every editor can run its quick
+      // fix. Here it is handled in the editor, where the choice can be saved;
+      // the settings listener then restarts the server.
+      executeCommand: async (
+        command: string,
+        args: unknown[],
+        next: ExecuteCommandSignature,
+      ): Promise<unknown> => {
+        if (command !== "postern.disableTrustHints") return next(command, args);
+        await vscode.workspace
+          .getConfiguration("postern")
+          .update("hba.reportTrust", false, vscode.ConfigurationTarget.Global);
+        output.info("Trust hints turned off in user settings (postern.hba.reportTrust).");
+        return undefined;
+      },
+    },
   };
 }
 
