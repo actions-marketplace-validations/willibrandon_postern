@@ -5,6 +5,7 @@ defmodule Postern.Application do
 
   @impl true
   def start(_type, _args) do
+    Logger.configure(level: :warning)
     env = if Code.ensure_loaded?(Mix), do: Mix.env(), else: :prod
 
     args = runtime_args()
