@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="Postern, PostgreSQL configuration">
+  <rect width="256" height="256" rx="52" fill="#172033"/>
+  <path d="M56 200 V128 A72 72 0 0 1 200 128 V200 H172 V128 A44 44 0 0 0 84 128 V200 Z" fill="#f59e0b"/>
+  <rect x="104" y="124" width="48" height="15" rx="7.5" fill="#f8fafc"/>
+  <rect x="104" y="154" width="36" height="15" rx="7.5" fill="#94a3b8"/>
+</svg>

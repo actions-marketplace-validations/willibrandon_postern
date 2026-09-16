@@ -1,0 +1,276 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build, test and package everything without publishing
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  OTP_VERSION: "28.3.3"
+  ELIXIR_VERSION: "1.19.5"
+  ZIG_VERSION: "0.16.0"
+  NODE_VERSION: "24"
+
+jobs:
+  verify:
+    name: Verify source and versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: ${{ env.OTP_VERSION }}
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          version-type: strict
+      - run: mix deps.get
+      - run: mix compile --warnings-as-errors
+      - run: mix test
+      - run: mix credo --strict
+      - run: mix format --check-formatted
+      - name: Check that the server, the extension, the changelogs and the tag agree
+        id: version
+        run: |
+          version=$(mix run --no-start --no-compile -e 'IO.write(Mix.Project.config()[:version])')
+          extension=$(node -p "require('./editors/vscode/package.json').version")
+          test "$version" = "$extension" || { echo "mix.exs is $version but the extension is $extension" >&2; exit 1; }
+          for changelog in CHANGELOG.md editors/vscode/CHANGELOG.md; do
+            grep -Eq "^## \[$version\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$" "$changelog" || { echo "$changelog has no dated $version entry" >&2; exit 1; }
+          done
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            test "${GITHUB_REF_NAME}" = "v$version" || { echo "tag ${GITHUB_REF_NAME} does not match v$version" >&2; exit 1; }
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  binaries:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    needs: verify
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: ${{ env.OTP_VERSION }}
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          version-type: strict
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: ${{ env.ZIG_VERSION }}
+      - run: sudo apt-get install -y --no-install-recommends xz-utils p7zip-full
+      - run: MIX_ENV=prod mix deps.get
+      - run: MIX_ENV=prod mix release
+      - name: Name the binaries by VS Code target and write checksums
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          mkdir -p artifacts/binaries
+          cp burrito_out/postern_linux_x86_64 "artifacts/binaries/postern-$VERSION-linux-x64"
+          cp burrito_out/postern_linux_aarch64 "artifacts/binaries/postern-$VERSION-linux-arm64"
+          cp burrito_out/postern_macos_x86_64 "artifacts/binaries/postern-$VERSION-darwin-x64"
+          cp burrito_out/postern_macos_arm64 "artifacts/binaries/postern-$VERSION-darwin-arm64"
+          cp burrito_out/postern_windows_x86_64.exe "artifacts/binaries/postern-$VERSION-win32-x64.exe"
+          chmod 755 artifacts/binaries/*
+          (cd artifacts/binaries && sha256sum postern-* > SHA256SUMS)
+          cat artifacts/binaries/SHA256SUMS
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: binaries
+          path: artifacts/binaries
+          if-no-files-found: error
+
+  extension:
+    name: Package extension
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [verify, binaries]
+    defaults:
+      run:
+        working-directory: editors/vscode
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: npm ci
+      - run: npm run verify
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: binaries
+          path: artifacts/binaries
+      - name: Package one VSIX per platform plus a universal one
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          set -eu
+          out="$GITHUB_WORKSPACE/artifacts/vsix"
+          bin="$GITHUB_WORKSPACE/artifacts/binaries"
+          mkdir -p "$out"
+          package() {
+            target="$1"; source="$2"; name="$3"
+            rm -rf server && mkdir server
+            cp "$bin/$source" "server/$name" && chmod 755 "server/$name"
+            npx vsce package --no-dependencies --target "$target" --out "$out/postern-$VERSION-$target.vsix"
+          }
+          package linux-x64 "postern-$VERSION-linux-x64" postern
+          package alpine-x64 "postern-$VERSION-linux-x64" postern
+          package linux-arm64 "postern-$VERSION-linux-arm64" postern
+          package alpine-arm64 "postern-$VERSION-linux-arm64" postern
+          package darwin-x64 "postern-$VERSION-darwin-x64" postern
+          package darwin-arm64 "postern-$VERSION-darwin-arm64" postern
+          package win32-x64 "postern-$VERSION-win32-x64.exe" postern.exe
+          rm -rf server
+          npx vsce package --no-dependencies --out "$out/postern-$VERSION.vsix"
+          ls -la "$out"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: vsix
+          path: artifacts/vsix
+          if-no-files-found: error
+
+  smoke:
+    name: Run the extension on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    needs: [verify, binaries]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary: linux-x64
+            name: postern
+          - os: macos-latest
+            binary: darwin-arm64
+            name: postern
+          - os: windows-latest
+            binary: win32-x64.exe
+            name: postern.exe
+    defaults:
+      run:
+        working-directory: editors/vscode
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: npm ci
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: binaries
+          path: artifacts/binaries
+      - name: Place the platform binary where the extension looks for it
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          mkdir -p server
+          cp "$GITHUB_WORKSPACE/artifacts/binaries/postern-$VERSION-${{ matrix.binary }}" "server/${{ matrix.name }}"
+          chmod 755 "server/${{ matrix.name }}"
+      - name: Test on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm test
+      - name: Test on macOS or Windows
+        if: runner.os != 'Linux'
+        run: npm test
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [verify, binaries, extension, smoke]
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: editors/vscode/package-lock.json
+      - run: npm ci
+        working-directory: editors/vscode
+      - name: Verify publishing credentials
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        working-directory: editors/vscode
+        run: |
+          test -n "$VSCE_PAT" || { echo "VSCE_PAT is required" >&2; exit 1; }
+          test -n "$OVSX_PAT" || { echo "OVSX_PAT is required" >&2; exit 1; }
+          npx vsce verify-pat willibrandon
+          npx ovsx verify-pat willibrandon --pat "$OVSX_PAT"
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: binaries
+          path: artifacts/release
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: vsix
+          path: artifacts/release
+      - name: Attest build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: artifacts/release/*
+      - name: Create a draft GitHub release with every asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" artifacts/release/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" artifacts/release/* --draft --verify-tag \
+              --title "Postern $VERSION" --notes-from-tag
+          fi
+      - name: Publish to the Visual Studio Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        working-directory: editors/vscode
+        run: |
+          for vsix in "$GITHUB_WORKSPACE"/artifacts/release/*.vsix; do
+            npx vsce publish --packagePath "$vsix" --no-dependencies --skip-duplicate
+          done
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        working-directory: editors/vscode
+        run: |
+          for vsix in "$GITHUB_WORKSPACE"/artifacts/release/*.vsix; do
+            npx ovsx publish "$vsix" --pat "$OVSX_PAT" --skip-duplicate
+          done
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false

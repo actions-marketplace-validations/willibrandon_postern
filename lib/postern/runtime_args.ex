@@ -9,9 +9,17 @@ defmodule Postern.RuntimeArgs do
     @doc "Returns arguments passed to the Burrito executable."
     @spec argv() :: [String.t()]
     def argv, do: BurritoArgs.argv()
+
+    @doc "Returns true when running inside a Burrito-wrapped binary."
+    @spec standalone?() :: boolean()
+    def standalone?, do: Burrito.Util.running_standalone?()
   else
     @doc "Returns the VM command-line arguments."
     @spec argv() :: [String.t()]
     def argv, do: System.argv()
+
+    @doc "Returns true when running inside a Burrito-wrapped binary."
+    @spec standalone?() :: boolean()
+    def standalone?, do: false
   end
 end

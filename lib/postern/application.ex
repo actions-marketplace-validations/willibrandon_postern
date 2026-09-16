@@ -33,7 +33,22 @@ defmodule Postern.Application do
       end
 
     opts = [strategy: :one_for_one, name: Postern.Supervisor]
-    Supervisor.start_link(children, opts)
+
+    with {:ok, pid} <- Supervisor.start_link(children, opts) do
+      if children != [] and Postern.RuntimeArgs.standalone?(), do: keep_vm_alive()
+      {:ok, pid}
+    end
+  end
+
+  # Burrito's launcher starts the VM with `-s elixir start_cli` and passes only
+  # the user's arguments after `-extra`. Without `--no-halt` among them, the
+  # Elixir CLI resets `System.no_halt/1` and halts the VM the moment boot
+  # completes, which kills the stdio server before the first request. Never
+  # returning from `start/2` keeps boot from completing; the server halts the
+  # VM itself when the client sends `exit`, and a supervisor crash takes this
+  # linked process down with it.
+  defp keep_vm_alive do
+    Process.sleep(:infinity)
   end
 
   defp runtime_args do

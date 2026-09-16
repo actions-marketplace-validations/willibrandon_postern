@@ -1,0 +1,193 @@
+{
+  "name": "postern",
+  "displayName": "Postern",
+  "description": "Diagnostics, hover and completion for postgresql.conf, pg_hba.conf and pg_ident.conf.",
+  "version": "0.1.0",
+  "publisher": "willibrandon",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24 <25",
+    "vscode": "^1.102.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "postgresql",
+    "postgres",
+    "postgresql.conf",
+    "pg_hba.conf",
+    "pg_ident.conf"
+  ],
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#172033",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/willibrandon/postern.git",
+    "directory": "editors/vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/willibrandon/postern/issues"
+  },
+  "homepage": "https://github.com/willibrandon/postern/tree/main/editors/vscode#readme",
+  "main": "./dist/extension.cjs",
+  "browser": "./dist/browser.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": {
+      "supported": "limited",
+      "description": "Syntax highlighting works everywhere. The language server needs files on a local or remote file system."
+    },
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "The language server starts. The executable path and the connection string are read from user settings only.",
+      "restrictedConfigurations": [
+        "postern.path",
+        "postern.connectionString"
+      ]
+    }
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "postgresql-conf",
+        "aliases": [
+          "PostgreSQL Configuration",
+          "postgresql.conf"
+        ],
+        "filenames": [
+          "postgresql.conf",
+          "postgresql.auto.conf"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "pg-hba",
+        "aliases": [
+          "PostgreSQL Client Authentication",
+          "pg_hba.conf"
+        ],
+        "filenames": [
+          "pg_hba.conf"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "pg-ident",
+        "aliases": [
+          "PostgreSQL User Name Maps",
+          "pg_ident.conf"
+        ],
+        "filenames": [
+          "pg_ident.conf"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "postgresql-conf",
+        "scopeName": "source.postgresql-conf",
+        "path": "./syntaxes/postgresql-conf.tmLanguage.json"
+      },
+      {
+        "language": "pg-hba",
+        "scopeName": "source.pg-hba",
+        "path": "./syntaxes/pg-hba.tmLanguage.json"
+      },
+      {
+        "language": "pg-ident",
+        "scopeName": "source.pg-hba",
+        "path": "./syntaxes/pg-hba.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "postern.restartServer",
+        "title": "Restart Language Server",
+        "category": "Postern"
+      },
+      {
+        "command": "postern.showOutput",
+        "title": "Show Language Server Output",
+        "category": "Postern"
+      }
+    ],
+    "configuration": {
+      "title": "Postern",
+      "properties": {
+        "postern.path": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "markdownDescription": "Path to the `postern` executable. Leave empty to use the binary bundled with the extension, or `postern` on the `PATH` when this package has no binary for your platform."
+        },
+        "postern.pg": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": null,
+          "minimum": 13,
+          "maximum": 18,
+          "markdownDescription": "PostgreSQL major version used for offline checks, 13 to 18. Empty means the newest. A `# postern: pg=16` comment at the top of a file overrides this setting."
+        },
+        "postern.connectionString": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "markdownDescription": "`postgres://` URL of a server to check the open files against. Empty keeps checks offline."
+        },
+        "postern.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Log the traffic between VS Code and the language server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node ./esbuild.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "generate:icon": "node ./scripts/generate-icon.mjs",
+    "check:icon": "node ./scripts/check-icon.mjs",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm run check:icon && npm run build",
+    "pretest": "npm run build && tsc -p tsconfig.test.json",
+    "test": "vscode-test",
+    "vscode:prepublish": "npm run build",
+    "package": "vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "vscode-languageclient": "10.1.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/mocha": "10.0.10",
+    "@types/node": "24.13.4",
+    "@types/vscode": "1.102.0",
+    "@vscode/test-cli": "0.0.15",
+    "@vscode/test-electron": "3.1.0",
+    "@vscode/vsce": "3.9.2",
+    "esbuild": "0.28.2",
+    "eslint": "10.10.0",
+    "ovsx": "1.2.0",
+    "prettier": "3.9.6",
+    "sharp": "0.35.4",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "typescript-eslint": "8.70.0"
+  }
+}

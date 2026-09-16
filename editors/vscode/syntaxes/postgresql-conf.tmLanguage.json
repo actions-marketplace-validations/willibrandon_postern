@@ -1,0 +1,65 @@
+{
+  "name": "PostgreSQL Config",
+  "scopeName": "source.postgresql-conf",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#directive"
+    },
+    {
+      "include": "#assignment"
+    }
+  ],
+  "repository": {
+    "comment": {
+      "match": "#.*$",
+      "name": "comment.line.number-sign.postgresql-conf"
+    },
+    "directive": {
+      "match": "^\\s*(include_if_exists|include_dir|include)\\b\\s*(=)?\\s*('[^']*'|\\S+)?",
+      "captures": {
+        "1": {
+          "name": "keyword.control.import.postgresql-conf"
+        },
+        "2": {
+          "name": "keyword.operator.assignment.postgresql-conf"
+        },
+        "3": {
+          "name": "string.quoted.single.postgresql-conf"
+        }
+      }
+    },
+    "assignment": {
+      "begin": "^\\s*([A-Za-z_][A-Za-z0-9_.]*)\\s*(=)?\\s*",
+      "beginCaptures": {
+        "1": {
+          "name": "variable.other.setting.postgresql-conf"
+        },
+        "2": {
+          "name": "keyword.operator.assignment.postgresql-conf"
+        }
+      },
+      "end": "(?=#)|$",
+      "patterns": [
+        {
+          "match": "'(?:[^']|'')*'",
+          "name": "string.quoted.single.postgresql-conf"
+        },
+        {
+          "match": "\\b-?\\d+(?:\\.\\d+)?\\s*(?:kB|MB|GB|TB|us|ms|s|min|h|d|B)?\\b",
+          "name": "constant.numeric.postgresql-conf"
+        },
+        {
+          "match": "\\b(?i:on|off|true|false|yes|no)\\b",
+          "name": "constant.language.boolean.postgresql-conf"
+        },
+        {
+          "match": "[A-Za-z_][A-Za-z0-9_./:-]*",
+          "name": "string.unquoted.postgresql-conf"
+        }
+      ]
+    }
+  }
+}

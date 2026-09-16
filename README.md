@@ -1,78 +1,100 @@
 # Postern
 
-A Language Server Protocol (LSP) server for PostgreSQL configuration files — `postgresql.conf`, `postgresql.auto.conf`, `pg_hba.conf`, and `pg_ident.conf`.
+A language server for PostgreSQL configuration files: `postgresql.conf`, `postgresql.auto.conf`,
+`pg_hba.conf` and `pg_ident.conf`.
 
-Postern provides offline diagnostics, hover, completion, and an optional live connection to a running PostgreSQL instance for exact `pg_file_settings` diagnostics.
+Postern parses the three formats itself and checks them against catalogs of `pg_settings` for
+PostgreSQL 13 through 18, so it works with no server running. When it can reach a server, it reads
+`pg_file_settings`, `pg_hba_file_rules` and `pg_ident_file_mappings`. Those views are PostgreSQL
+parsing its own configuration files and reporting the line and the error, which means the editor
+shows the exact message a reload would produce, before the reload.
 
-## Stack
+## What it reports
 
-* Elixir 1.18+ / OTP 27+
-* gen_lsp for stdio LSP transport
-* nimble_parsec for parsing
-* postgrex for PostgreSQL connections
-* jason for JSON
-* burrito for releases
-* ExUnit, Credo and `mix format`
+- Unknown or misspelled settings, with the closest catalog name.
+- Values that do not fit the setting's type, unit, range or enum.
+- Settings removed or renamed between versions, and settings that need a restart.
+- Duplicate keys, where PostgreSQL keeps the last one.
+- `pg_hba.conf` rules that an earlier rule shadows, options that do not apply to the method, and
+  ident maps that are missing or unused.
+- Hover with the setting's description, default and range; completion of names, enum values,
+  authentication methods and, with a live connection, database and role names.
 
-## Installation
+## Install
 
-### Prerequisites
+Download a binary for your platform from the
+[releases page](https://github.com/willibrandon/postern/releases) and put it on your `PATH` as
+`postern`. The binary is self-contained; it unpacks the Erlang runtime into your user data
+directory on first run.
 
-```sh
-mise use -g erlang@27 elixir@1.18
-# or asdf
-mix local.hex --force && mix local.rebar --force
+Visual Studio Code users can install the [Postern extension](editors/vscode/README.md), which
+bundles the binary.
+
+### Neovim
+
+```lua
+vim.lsp.config("postern", {
+  cmd = { "postern" },
+  filetypes = { "conf" },
+  root_markers = { "postgresql.conf", "pg_hba.conf", ".git" },
+})
+vim.lsp.enable("postern")
 ```
 
-### Project
+### Helix
 
-```sh
-mix deps.get
-mix compile --warnings-as-errors
-mix test
-mix credo --strict
-mix format --check-formatted
+```toml
+[language-server.postern]
+command = "postern"
+
+[[language]]
+name = "postgresql-conf"
+scope = "source.postgresql-conf"
+file-types = [{ glob = "postgresql.conf" }, { glob = "postgresql.auto.conf" }, { glob = "pg_hba.conf" }, { glob = "pg_ident.conf" }]
+language-servers = ["postern"]
 ```
 
-### CLI
+## Command line
 
 ```sh
-mix postern.catalog   # generate priv/catalog/pg13.json … pg18.json from Docker
 postern check postgresql.conf pg_hba.conf
+postern check --json pg_hba.conf
 ```
 
-### Release (Burrito)
-
-```sh
-MIX_ENV=prod mix release
-# binaries at burrito_out/postern_linux_x86_64 etc. (linux-x86_64, macos-arm64, windows-x86_64)
-```
-
-## LSP
-
-Postern speaks LSP over stdio. Clients should launch the `postern` executable
-and support `initialize`, document synchronization, diagnostics, hover and
-completion as those capabilities become available.
+`check` exits 1 when any file has an error. Files are recognised by name, so pass the real
+configuration files rather than copies with other names.
 
 ## Configuration
 
-Target Postgres version is resolved in order:
+The target PostgreSQL version comes from, in order, the `pg` initialization option, a
+`# postern: pg=16` comment at the top of the file, or the newest catalog.
 
-1. `initializationOptions.pg` (e.g. `16`)
-2. `# postern: pg=16` comment at top of file
-3. newest catalog (18)
+A live connection is configured with the `connectionString` initialization option
+(`postgres://user:pass@host:5432/db`) or the usual `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER` and
+`PGPASSWORD` variables. When the server is unreachable, Postern falls back to the catalogs and says
+so in one informational diagnostic.
 
 ## Development
 
+Requires Elixir 1.18 or newer on Erlang/OTP 27 or newer.
+
 ```sh
+mix deps.get
 mix test
 mix credo --strict
 mix format --check-formatted
-mix compile --warnings-as-errors
+mix postern.catalog   # regenerate priv/catalog from PostgreSQL containers on ports 5413 to 5418
 ```
 
-Catalogs are generated from `pg_settings` with `mix postern.catalog`.
-Diagnostics and LSP features have fixture-backed ExUnit tests.
+Release binaries are built with [Burrito](https://github.com/burrito-elixir/burrito), which needs
+Zig 0.16.0, `xz`, and `7z` for the Windows target:
+
+```sh
+MIX_ENV=prod mix release
+```
+
+Burrito caches the unpacked runtime by application version, so bump the version in `mix.exs` or
+delete the `.burrito/postern_erts-*` directory when testing a rebuilt binary.
 
 ## License
 

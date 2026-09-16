@@ -36,12 +36,12 @@ defmodule Postern.StdioTest do
       })
     )
 
-    {response, buffer} = read_packet(port, "")
+    {response, buffer} = read_response(port, "")
     assert %{"id" => 1, "result" => %{"capabilities" => capabilities}} = response
     assert capabilities["textDocumentSync"]["openClose"]
 
     Port.command(port, packet(%{"jsonrpc" => "2.0", "id" => 2, "method" => "shutdown"}))
-    {response, _buffer} = read_packet(port, buffer)
+    {response, _buffer} = read_response(port, buffer)
     assert %{"id" => 2, "result" => nil} = response
 
     Port.command(port, packet(%{"jsonrpc" => "2.0", "method" => "exit"}))
@@ -50,6 +50,14 @@ defmodule Postern.StdioTest do
   defp packet(payload) do
     body = Jason.encode!(payload)
     ["Content-Length: ", Integer.to_string(byte_size(body)), "\r\n\r\n", body]
+  end
+
+  # Skips server notifications such as window/logMessage until a response arrives.
+  defp read_response(port, buffer) do
+    case read_packet(port, buffer) do
+      {%{"id" => _} = response, rest} -> {response, rest}
+      {_notification, rest} -> read_response(port, rest)
+    end
   end
 
   defp read_packet(port, buffer) do

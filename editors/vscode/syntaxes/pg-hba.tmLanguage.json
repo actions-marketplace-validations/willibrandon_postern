@@ -1,0 +1,50 @@
+{
+  "name": "PostgreSQL Client Authentication",
+  "scopeName": "source.pg-hba",
+  "patterns": [
+    {
+      "match": "#.*$",
+      "name": "comment.line.number-sign.pg-hba"
+    },
+    {
+      "match": "^\\s*(include_if_exists|include_dir|include)\\b",
+      "captures": {
+        "1": {
+          "name": "keyword.control.import.pg-hba"
+        }
+      }
+    },
+    {
+      "match": "^\\s*(local|hostssl|hostnossl|hostgssenc|hostnogssenc|host)\\b",
+      "captures": {
+        "1": {
+          "name": "keyword.other.connection-type.pg-hba"
+        }
+      }
+    },
+    {
+      "match": "\\b(trust|reject|scram-sha-256|md5|password|gss|sspi|ident|peer|ldap|radius|cert|pam|bsd|oauth)\\b",
+      "name": "support.constant.auth-method.pg-hba"
+    },
+    {
+      "match": "\\b(all|sameuser|samerole|samegroup|replication|samehost|samenet)\\b",
+      "name": "constant.language.keyword.pg-hba"
+    },
+    {
+      "match": "\\b(?:\\d{1,3}\\.){3}\\d{1,3}(?:/\\d{1,2})?\\b|\\b[0-9a-fA-F:]+::[0-9a-fA-F:]*(?:/\\d{1,3})?",
+      "name": "constant.numeric.address.pg-hba"
+    },
+    {
+      "match": "\"[^\"]*\"",
+      "name": "string.quoted.double.pg-hba"
+    },
+    {
+      "match": "\\b([A-Za-z_][A-Za-z0-9_]*)=",
+      "captures": {
+        "1": {
+          "name": "variable.parameter.option.pg-hba"
+        }
+      }
+    }
+  ]
+}

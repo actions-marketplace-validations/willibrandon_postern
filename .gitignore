@@ -23,3 +23,14 @@ postern-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# VS Code extension build outputs.
+/editors/vscode/node_modules/
+/editors/vscode/dist/
+/editors/vscode/out/
+/editors/vscode/server/
+/editors/vscode/.vscode-test/
+/editors/vscode/*.vsix
+
+# Local packaging output.
+/artifacts/

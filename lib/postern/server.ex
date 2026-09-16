@@ -43,7 +43,6 @@ defmodule Postern.Server do
   alias Postern.LiveOracle
 
   @server_name "postern"
-  @server_version "0.1.0"
 
   # Public API
 
@@ -103,6 +102,11 @@ defmodule Postern.Server do
         live_oracle: live_oracle
       )
 
+    GenLSP.info(
+      lsp,
+      "[initialize] Initializing Postern language server for #{client_name(params)}."
+    )
+
     result = %InitializeResult{
       capabilities: %ServerCapabilities{
         text_document_sync: %TextDocumentSyncOptions{
@@ -115,13 +119,14 @@ defmodule Postern.Server do
         inlay_hint_provider: true,
         code_action_provider: true
       },
-      server_info: %{name: @server_name, version: @server_version}
+      server_info: %{name: @server_name, version: version()}
     }
 
     {:reply, result, lsp}
   end
 
   def handle_request(%Shutdown{}, lsp) do
+    GenLSP.info(lsp, "[shutdown] Stopping Postern language server.")
     {:reply, nil, assign(lsp, exit_code: 0)}
   end
 
@@ -195,6 +200,7 @@ defmodule Postern.Server do
 
   @impl true
   def handle_notification(%Initialized{}, lsp) do
+    GenLSP.info(lsp, "[initialized] Postern language server initialized.")
     {:noreply, lsp}
   end
 
@@ -309,4 +315,9 @@ defmodule Postern.Server do
       if FileKind.detect(uri) == kind, do: document.text
     end)
   end
+
+  defp client_name(%InitializeParams{client_info: %{name: name}}) when is_binary(name), do: name
+  defp client_name(_params), do: "an unknown client"
+
+  defp version, do: :postern |> Application.spec(:vsn) |> to_string()
 end
