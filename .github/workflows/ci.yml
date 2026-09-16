@@ -129,6 +129,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The harness builds Lua from source for busted and needs the readline headers.
+      - run: sudo apt-get install -y --no-install-recommends libreadline-dev unzip
       - name: Install Neovim
         run: |
           curl -sSL -o "$RUNNER_TEMP/nvim.tar.gz" https://github.com/neovim/neovim/releases/download/v0.11.5/nvim-linux-x86_64.tar.gz
