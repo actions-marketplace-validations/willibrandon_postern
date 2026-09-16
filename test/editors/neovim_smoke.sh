@@ -3,6 +3,7 @@ set -euo pipefail
 
 command -v nvim >/dev/null
 : "${NVIM_LSPCONFIG:?set NVIM_LSPCONFIG to the nvim-lspconfig directory}"
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 nvim --headless -u NONE --cmd "set rtp+=$NVIM_LSPCONFIG" +'lua assert(pcall(require, "lspconfig"), "nvim-lspconfig is required")' +qa
 
 bin="${POSTERN_BIN:-postern}"

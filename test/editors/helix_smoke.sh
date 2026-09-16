@@ -3,6 +3,7 @@ set -euo pipefail
 
 command -v hx >/dev/null
 bin="${POSTERN_BIN:-postern}"
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 cat >"$tmp_dir/postgresql.conf" <<'EOF'
