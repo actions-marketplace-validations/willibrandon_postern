@@ -21,7 +21,7 @@ defmodule Postern.PostgresqlConfDiagnosticsTest do
     assert Enum.any?(messages, &String.contains?(&1, "below the minimum"))
     assert Enum.any?(messages, &String.contains?(&1, "unit \"ms\" is not allowed"))
     assert Enum.any?(messages, &String.contains?(&1, "duplicate setting"))
-    assert Enum.any?(messages, &String.contains?(&1, "requires restart"))
+    refute Enum.any?(messages, &String.contains?(&1, "requires restart"))
   end
 
   test "selects the target version from a postern comment" do

@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+- Settings whose changes need a server restart are no longer reported as problems. That is a
+  property of the setting, not a fault in the file, so it now appears in the hover instead. A
+  live server that has not yet applied a changed value still gets its pending-restart note.
+
 ## [0.1.1] - 2026-09-16
 
 - Fixed a crash when a live server was reachable: the oracle returned its snapshot wrapped in

@@ -15,7 +15,6 @@ defmodule Postern.PostgresqlConfDiagnostics do
 
   @error 1
   @warning 2
-  @info 3
   @hint 4
 
   @boolean_values ~w(on off true false yes no 1 0 t f y n)
@@ -118,21 +117,11 @@ defmodule Postern.PostgresqlConfDiagnostics do
     end
   end
 
-  defp setting_diagnostics(entry, setting, name, _versions, _catalog) do
-    value_diagnostics =
-      case validate_value(entry.value, setting) do
-        :ok -> []
-        {:error, message} -> [diagnostic(entry.value_span, @error, message)]
-      end
-
-    restart_diagnostics =
-      if value_diagnostics == [] and setting["context"] == "postmaster" do
-        [diagnostic(entry.name_span, @info, "setting #{inspect(name)} requires restart")]
-      else
-        []
-      end
-
-    value_diagnostics ++ restart_diagnostics
+  defp setting_diagnostics(entry, setting, _name, _versions, _catalog) do
+    case validate_value(entry.value, setting) do
+      :ok -> []
+      {:error, message} -> [diagnostic(entry.value_span, @error, message)]
+    end
   end
 
   defp unknown_setting_diagnostic(entry, name, versions) do

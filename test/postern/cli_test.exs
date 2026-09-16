@@ -24,7 +24,7 @@ defmodule Postern.CLITest do
         assert CLI.run(["check", Path.join(@fixtures, "postgresql.conf")]) == 0
       end)
 
-    assert output =~ "requires restart"
+    assert output == ""
   end
 
   test "check returns one for parser errors" do

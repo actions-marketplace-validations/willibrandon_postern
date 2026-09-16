@@ -84,7 +84,12 @@ defmodule Postern.Features do
       |> Enum.reject(&is_nil/1)
       |> Enum.join("  \n")
 
-    "### `#{setting["name"]}`\n\n#{description}\n\n#{details}"
+    note =
+      if setting["context"] == "postmaster",
+        do: "\n\nA change takes effect after a server restart.",
+        else: ""
+
+    "### `#{setting["name"]}`\n\n#{description}\n\n#{details}#{note}"
   end
 
   defp optional_detail(_label, nil), do: nil

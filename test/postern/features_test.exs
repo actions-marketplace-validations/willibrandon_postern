@@ -16,6 +16,7 @@ defmodule Postern.FeaturesTest do
     assert value =~ "integer"
     assert value =~ "postmaster"
     assert range.start.character == 0
+    assert value =~ "takes effect after a server restart"
   end
 
   test "postgresql.conf completion offers setting names and enum values" do
