@@ -27,6 +27,7 @@ defmodule Postern.Server do
   alias GenLSP.Requests.TextDocumentCompletion
   alias GenLSP.Requests.TextDocumentHover
   alias GenLSP.Requests.TextDocumentInlayHint
+  alias GenLSP.Requests.WorkspaceExecuteCommand
   alias GenLSP.Structures.CompletionOptions
   alias GenLSP.Structures.InitializeParams
   alias GenLSP.Structures.InitializeResult
@@ -174,6 +175,20 @@ defmodule Postern.Server do
         LiveFeatures.code_actions(uri, snapshot)
       end)
 
+    {:reply, reply, lsp}
+  end
+
+  def handle_request(%WorkspaceExecuteCommand{params: params}, lsp) do
+    arguments = params.arguments || []
+    uri = List.first(arguments)
+
+    arguments =
+      case DocumentStore.get(lsp, uri) do
+        %{text: text} -> arguments ++ [text]
+        nil -> arguments
+      end
+
+    reply = LiveOracle.execute(lsp.assigns.live_oracle, params.command, arguments)
     {:reply, reply, lsp}
   end
 
