@@ -22,6 +22,6 @@ language-servers = ["postern"]
 EOF
 
 log="$tmp_dir/helix.log"
-timeout 8s script -qefc "env XDG_CONFIG_HOME='$tmp_dir/config' hx --log '$log' '$tmp_dir/postgresql.conf'" /dev/null >/dev/null 2>&1 || true
+timeout 8s script -qefc "env XDG_CONFIG_HOME='$tmp_dir/config' hx -vvv --log '$log' '$tmp_dir/postgresql.conf'" /dev/null >/dev/null 2>&1 || true
 
 grep -q "textDocument/publishDiagnostics\|publishDiagnostics" "$log"
