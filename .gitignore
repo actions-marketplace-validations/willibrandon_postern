@@ -34,3 +34,6 @@ postern-*.tar
 
 # Local packaging output.
 /artifacts/
+
+# Neovim test harness state.
+/editors/nvim/.tests/
