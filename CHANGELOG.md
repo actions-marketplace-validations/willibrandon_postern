@@ -9,6 +9,8 @@
   trust hint is a toggle in Fresh Settings.
 - The server handles the quick fix that stops trust hints itself, so it works from Fresh as well
   as VS Code. The hint stays off until the server restarts.
+- Changes sent as ranges, which Fresh does whatever the server asks for, are applied to the
+  document. Before, the text of the last change replaced the whole file.
 
 ## [0.1.5] - 2026-09-16
 

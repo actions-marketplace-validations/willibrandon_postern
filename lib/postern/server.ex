@@ -251,15 +251,14 @@ defmodule Postern.Server do
   def handle_notification(%TextDocumentDidChange{params: params}, lsp) do
     uri = params.text_document.uri
     version = params.text_document.version
-    changes = params.content_changes
 
-    text =
-      case List.last(changes) do
-        %{text: t} -> t
-        %{"text" => t} -> t
-        _ -> ""
+    current =
+      case DocumentStore.get(lsp, uri) do
+        %{text: text} -> text
+        nil -> ""
       end
 
+    text = DocumentStore.apply_changes(current, params.content_changes)
     lsp = DocumentStore.update(lsp, uri, text, version)
     publish_diagnostics(lsp, uri, text, version)
     {:noreply, lsp}
