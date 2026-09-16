@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+- Lines the server writes to stderr are logged at their own level. The wrapper's "Uninstalled older
+  version" notice after an update is information, not an error.
+
 ## [0.1.4] - 2026-09-16
 
 - Published as platform packages only. The universal package could be installed in the minutes

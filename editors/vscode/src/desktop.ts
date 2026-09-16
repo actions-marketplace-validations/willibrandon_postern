@@ -1,7 +1,14 @@
 import { access, chmod } from "node:fs/promises";
 import { join } from "node:path";
+import * as readline from "node:readline";
 import * as vscode from "vscode";
-import { LanguageClient, TransportKind, type ServerOptions } from "vscode-languageclient/node";
+import {
+  LanguageClient,
+  TransportKind,
+  type LanguageClientOptions,
+  type ServerOptions,
+  type StdioOptions,
+} from "vscode-languageclient/node";
 import { affectsServer, clientOptions, outputChannelName } from "./common.js";
 
 let client: LanguageClient | undefined;
@@ -54,7 +61,11 @@ async function start(
     args: [],
     transport: TransportKind.stdio,
   };
-  client = new LanguageClient("postern", "Postern", serverOptions, clientOptions(output));
+  const options: LanguageClientOptions = {
+    ...clientOptions(output),
+    stdioOptions: stdioOptions(output),
+  };
+  client = new LanguageClient("postern", "Postern", serverOptions, options);
   context.subscriptions.push(client);
   output.info("Starting Postern language server.");
   try {
@@ -73,6 +84,23 @@ async function stop(): Promise<void> {
   const current = client;
   client = undefined;
   await current?.stop();
+}
+
+// The client library logs every line a server writes to stderr as an error.
+// The server's own log lines say which level they are, and anything else on
+// stderr, such as the runtime wrapper removing an older payload, is a notice.
+function stdioOptions(output: vscode.LogOutputChannel): Required<StdioOptions> {
+  const pipe = (input: NodeJS.ReadableStream): void => {
+    readline
+      .createInterface({ input, crlfDelay: Infinity, terminal: false, historySize: 0 })
+      .on("line", (line: string): void => {
+        if (line.trim() === "") return;
+        if (line.includes("[error]")) output.error(line);
+        else if (/\[warn(?:ing)?\]/u.test(line)) output.warn(line);
+        else output.info(line);
+      });
+  };
+  return { stdout: pipe, stderr: pipe };
 }
 
 async function resolveServer(
