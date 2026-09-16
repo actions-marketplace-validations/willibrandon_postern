@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.5] - 2026-09-16
 
 - Lines the server writes to stderr are logged at their own level. The wrapper's "Uninstalled older
   version" notice after an update is information, not an error.

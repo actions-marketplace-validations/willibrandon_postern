@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.5] - 2026-09-16
 
 - The VS Code extension logs what the server writes to stderr at the level the line states, so
   the runtime wrapper's notice about removing an older version no longer shows as an error.
