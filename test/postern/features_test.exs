@@ -61,4 +61,28 @@ defmodule Postern.FeaturesTest do
     assert Enum.any?(method_items, &(&1.label == "scram-sha-256"))
     assert Enum.any?(method_items, &(&1.label == "reject"))
   end
+
+  test "live HBA completion includes database and role names" do
+    snapshot =
+      {:ok, %{databases: [%{"datname" => "billing"}], roles: [%{"rolname" => "app_user"}]}}
+
+    database_items =
+      Features.completion(
+        "file:///tmp/pg_hba.conf",
+        "host ",
+        %Position{line: 0, character: 5},
+        %{live_snapshot: snapshot}
+      ).items
+
+    role_items =
+      Features.completion(
+        "file:///tmp/pg_hba.conf",
+        "host billing ",
+        %Position{line: 0, character: 14},
+        %{live_snapshot: snapshot}
+      ).items
+
+    assert Enum.any?(database_items, &(&1.label == "billing"))
+    assert Enum.any?(role_items, &(&1.label == "app_user"))
+  end
 end

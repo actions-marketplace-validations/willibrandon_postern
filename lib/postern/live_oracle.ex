@@ -39,6 +39,9 @@ defmodule Postern.LiveOracle do
    order by line_number
   """
 
+  @database_query "select datname from pg_database where datallowconn order by datname"
+  @role_query "select rolname from pg_roles order by rolname"
+
   @doc "Starts an oracle from PostgreSQL connection options, or disables it for `nil`."
   @spec start_link(keyword() | nil) :: GenServer.on_start()
   def start_link(options) do
@@ -164,7 +167,9 @@ defmodule Postern.LiveOracle do
          settings: settings,
          file_settings: file_settings,
          hba_rules: optional_query(conn, @hba_query),
-         ident_mappings: optional_query(conn, @ident_query)
+         ident_mappings: optional_query(conn, @ident_query),
+         databases: optional_query(conn, @database_query),
+         roles: optional_query(conn, @role_query)
        }}
     else
       {:error, _reason} -> {:error, :unreachable}

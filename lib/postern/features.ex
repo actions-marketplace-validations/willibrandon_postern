@@ -39,7 +39,7 @@ defmodule Postern.Features do
     items =
       case FileKind.detect(uri) do
         :postgresql_conf -> postgresql_completion(text, position, options)
-        :pg_hba_conf -> hba_completion(text, position)
+        :pg_hba_conf -> hba_completion(text, position, options)
         _ -> []
       end
 
@@ -151,7 +151,7 @@ defmodule Postern.Features do
     |> Enum.map(&completion_item(&1, CompletionItemKind.value(), setting["vartype"]))
   end
 
-  defp hba_completion(text, position) do
+  defp hba_completion(text, position, options) do
     line = line_at(text, position.line)
     before = String.slice(line, 0, min(position.character, String.length(line)))
     prefix = word_prefix(before)
@@ -160,7 +160,7 @@ defmodule Postern.Features do
     complete_fields =
       if String.ends_with?(before, [" ", "\t"]), do: fields, else: Enum.drop(fields, -1)
 
-    candidates = hba_candidates(complete_fields)
+    candidates = hba_candidates(complete_fields, live_values(options))
 
     candidates
     |> Enum.uniq()
@@ -168,20 +168,40 @@ defmodule Postern.Features do
     |> Enum.map(&completion_item(&1, CompletionItemKind.keyword(), "pg_hba.conf"))
   end
 
-  defp hba_candidates([]), do: @connection_types
-  defp hba_candidates([_type]), do: ~w(all sameuser samerole replication)
-  defp hba_candidates(["local", _database, _user]), do: @auth_methods
+  defp hba_candidates([], _live), do: @connection_types
+  defp hba_candidates([_type], live), do: ~w(all sameuser samerole replication) ++ live.databases
+  defp hba_candidates(["local", _database, _user], _live), do: @auth_methods
 
-  defp hba_candidates([type, _database, _user]) when type in @connection_types,
+  defp hba_candidates([type, _database, _user], _live) when type in @connection_types,
     do: @address_keywords
 
-  defp hba_candidates([type, _database, _user, _address]) when type in @connection_types,
+  defp hba_candidates([type, _database], live) when type in @connection_types,
+    do: ~w(all +group) ++ live.roles
+
+  defp hba_candidates([type, _database, _user, _address], _live) when type in @connection_types,
     do: @auth_methods
 
-  defp hba_candidates([_type, _database, _user, _address, _method]), do: @hba_options
+  defp hba_candidates([_type, _database, _user, _address, _method], _live), do: @hba_options
 
-  defp hba_candidates(_fields),
+  defp hba_candidates(_fields, _live),
     do: @connection_types ++ @auth_methods ++ @address_keywords ++ @hba_options
+
+  defp live_values(options) do
+    case option(options, :live_snapshot) do
+      {:ok, snapshot} ->
+        %{
+          databases: Enum.map(snapshot[:databases] || [], & &1["datname"]),
+          roles: Enum.map(snapshot[:roles] || [], & &1["rolname"])
+        }
+
+      _ ->
+        %{databases: [], roles: []}
+    end
+  end
+
+  defp option(options, key) when is_map(options), do: options[key] || options[Atom.to_string(key)]
+  defp option(options, key) when is_list(options), do: Keyword.get(options, key)
+  defp option(_options, _key), do: nil
 
   defp completion_item(label, kind, detail) do
     %CompletionItem{label: label, kind: kind, detail: detail}

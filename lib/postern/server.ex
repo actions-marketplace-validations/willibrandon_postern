@@ -132,7 +132,7 @@ defmodule Postern.Server do
             params.text_document.uri,
             text,
             params.position,
-            Map.get(lsp.assigns, :initialization_options, %{})
+            feature_options(lsp)
           )
 
         nil ->
@@ -281,6 +281,15 @@ defmodule Postern.Server do
       nil ->
         []
     end
+  end
+
+  defp feature_options(lsp) do
+    initialization_options = Map.get(lsp.assigns, :initialization_options, %{})
+
+    base_options =
+      if is_nil(initialization_options), do: %{}, else: Map.new(initialization_options)
+
+    Map.put(base_options, :live_snapshot, LiveOracle.snapshot(lsp.assigns.live_oracle))
   end
 
   defp document_options(lsp) do
