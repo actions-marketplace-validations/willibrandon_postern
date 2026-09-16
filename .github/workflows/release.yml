@@ -44,12 +44,14 @@ jobs:
       - run: mix test
       - run: mix credo --strict
       - run: mix format --check-formatted
-      - name: Check that the server, the extension, the changelogs and the tag agree
+      - name: Check that the server, the editor packages, the changelogs and the tag agree
         id: version
         run: |
           version=$(mix run --no-start --no-compile -e 'IO.write(Mix.Project.config()[:version])')
           extension=$(node -p "require('./editors/vscode/package.json').version")
           test "$version" = "$extension" || { echo "mix.exs is $version but the extension is $extension" >&2; exit 1; }
+          bundle=$(node -p "require('./editors/fresh/package.json').version")
+          test "$version" = "$bundle" || { echo "mix.exs is $version but the Fresh bundle is $bundle" >&2; exit 1; }
           for changelog in CHANGELOG.md editors/vscode/CHANGELOG.md; do
             grep -Eq "^## \[$version\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$" "$changelog" || { echo "$changelog has no dated $version entry" >&2; exit 1; }
           done
