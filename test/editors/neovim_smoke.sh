@@ -17,5 +17,5 @@ export POSTERN_SMOKE_BIN="$bin"
 export POSTERN_SMOKE_FILE="$tmp_dir/postgresql.conf"
 
 nvim --headless -u NONE --cmd "set rtp+=$NVIM_LSPCONFIG" \
-  +'lua local lspconfig = require("lspconfig"); local configs = require("lspconfig.configs"); configs.postern = { default_config = { cmd = { vim.env.POSTERN_SMOKE_BIN }, filetypes = { "conf" }, single_file_support = true, root_dir = function() return vim.fs.dirname(vim.api.nvim_buf_get_name(0)) end } }; lspconfig.postern.setup({}); vim.cmd("edit " .. vim.env.POSTERN_SMOKE_FILE); vim.bo.filetype = "conf"; lspconfig.postern.manager:try_add_wrapper(0); vim.wait(5000, function() return #vim.diagnostic.get(0) > 0 end); assert(#vim.diagnostic.get(0) > 0, "Postern did not publish a diagnostic")' \
+  +'lua local lspconfig = require("lspconfig"); local configs = require("lspconfig.configs"); configs.postern = { default_config = { cmd = { vim.env.POSTERN_SMOKE_BIN }, filetypes = { "conf" } } }; lspconfig.postern.setup({ autostart = false }); vim.cmd("edit " .. vim.env.POSTERN_SMOKE_FILE); vim.bo.filetype = "conf"; vim.lsp.start({ name = "postern", cmd = { vim.env.POSTERN_SMOKE_BIN }, root_dir = vim.fn.getcwd() }); vim.wait(5000, function() return #vim.diagnostic.get(0) > 0 end); assert(#vim.diagnostic.get(0) > 0, "Postern did not publish a diagnostic")' \
   +'qa!'
