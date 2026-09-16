@@ -2,8 +2,7 @@
 
 You are building "postern", a Language Server Protocol server for PostgreSQL
 configuration files: postgresql.conf, postgresql.auto.conf, pg_hba.conf and
-pg_ident.conf. Nothing like it exists yet. The owner has never written Elixir,
-so the code must be idiomatic and readable, not clever.
+pg_ident.conf. The code must be idiomatic and readable, not clever.
 
 ## STACK
 
@@ -120,8 +119,8 @@ containers.
 
 Scripts under test/editors that start Neovim headless with nvim-lspconfig,
 and Helix with a languages.toml, open a fixture, and assert that a diagnostic
-arrives. Document Zed and VS Code setup in the README; the owner will write
-those clients himself.
+arrives. Document Zed and VS Code setup in the README; clients are maintained
+separately from the server.
 
 ## DEFINITION OF DONE
 

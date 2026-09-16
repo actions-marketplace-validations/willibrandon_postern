@@ -1,18 +1,18 @@
 # Postern
 
-A Language Server Protocol (LSP) server for PostgreSQL configuration files — `postgresql.conf`, `postgresql.auto.conf`, `pg_hba.conf`, and `pg_ident.conf`. Nothing like it exists yet.
+A Language Server Protocol (LSP) server for PostgreSQL configuration files — `postgresql.conf`, `postgresql.auto.conf`, `pg_hba.conf`, and `pg_ident.conf`.
 
 Postern provides offline diagnostics, hover, completion, and an optional live connection to a running PostgreSQL instance for exact `pg_file_settings` diagnostics.
 
 ## Stack
 
 * Elixir 1.18+ / OTP 27+
-* [`gen_lsp`](deps/gen_lsp/usage-rules.md) — stdio transport
-* [`nimble_parsec`](https://hex.pm/packages/nimble_parsec) — grammars
-* [`postgrex`](https://hex.pm/packages/postgrex) — optional live oracle
-* [`jason`](https://hex.pm/packages/jason) — JSON
-* [`burrito`](https://hex.pm/packages/burrito) — single-binary releases (prod only)
-* ExUnit, Credo, `mix format`
+* gen_lsp for stdio LSP transport
+* nimble_parsec for parsing
+* postgrex for PostgreSQL connections
+* jason for JSON
+* burrito for releases
+* ExUnit, Credo and `mix format`
 
 ## Installation
 
@@ -64,8 +64,6 @@ Target Postgres version is resolved in order:
 
 ## Development
 
-Run the complete verification suite before submitting changes:
-
 ```sh
 mix test
 mix credo --strict
@@ -73,12 +71,8 @@ mix format --check-formatted
 mix compile --warnings-as-errors
 ```
 
-Ground rules:
-
-* Read `deps/*/lib` source before using a function — never guess.
-* `priv/catalog/pg13.json … pg18.json` are generated from `pg_settings` via Docker on `5432`+`5413..5418`. Keep generator as `mix postern.catalog`.
-* Every diagnostic/hover/completion gets an ExUnit test with a fixture under `test/fixtures/`.
-* `mix test` green, `mix credo --strict` clean, `mix format --check-formatted`, `mix compile --warnings-as-errors`.
+Catalogs are generated from `pg_settings` with `mix postern.catalog`.
+Diagnostics and LSP features have fixture-backed ExUnit tests.
 
 ## License
 

@@ -23,8 +23,10 @@ defmodule Postern.Server do
   alias GenLSP.Notifications.TextDocumentPublishDiagnostics
   alias GenLSP.Requests.Initialize
   alias GenLSP.Requests.Shutdown
+  alias GenLSP.Requests.TextDocumentCodeAction
   alias GenLSP.Requests.TextDocumentCompletion
   alias GenLSP.Requests.TextDocumentHover
+  alias GenLSP.Requests.TextDocumentInlayHint
   alias GenLSP.Structures.CompletionOptions
   alias GenLSP.Structures.InitializeParams
   alias GenLSP.Structures.InitializeResult
@@ -36,6 +38,8 @@ defmodule Postern.Server do
   alias Postern.DocumentStore
   alias Postern.Features
   alias Postern.FileKind
+  alias Postern.LiveFeatures
+  alias Postern.LiveOracle
 
   @server_name "postern"
   @server_version "0.1.0"
@@ -62,6 +66,7 @@ defmodule Postern.Server do
   @impl true
   def init(lsp, args) do
     test_mode = Keyword.get(args, :test_mode, false)
+    {:ok, live_oracle} = LiveOracle.start_link(nil)
 
     {:ok,
      assign(lsp,
@@ -69,7 +74,8 @@ defmodule Postern.Server do
        exit_code: 1,
        test_mode: test_mode,
        initialization_options: nil,
-       root_uri: nil
+       root_uri: nil,
+       live_oracle: live_oracle
      )}
   end
 
@@ -78,10 +84,21 @@ defmodule Postern.Server do
     initialization_options = Map.get(params, :initialization_options)
     root_uri = Map.get(params, :root_uri)
 
+    live_oracle =
+      case LiveOracle.connection_options(initialization_options || %{}) do
+        nil ->
+          lsp.assigns.live_oracle
+
+        options ->
+          {:ok, oracle} = LiveOracle.start_link(options)
+          oracle
+      end
+
     lsp =
       assign(lsp,
         initialization_options: initialization_options,
-        root_uri: root_uri
+        root_uri: root_uri,
+        live_oracle: live_oracle
       )
 
     result = %InitializeResult{
@@ -92,7 +109,9 @@ defmodule Postern.Server do
           save: %SaveOptions{include_text: true}
         },
         hover_provider: true,
-        completion_provider: %CompletionOptions{trigger_characters: [".", "="]}
+        completion_provider: %CompletionOptions{trigger_characters: [".", "="]},
+        inlay_hint_provider: true,
+        code_action_provider: true
       },
       server_info: %{name: @server_name, version: @server_version}
     }
@@ -136,6 +155,24 @@ defmodule Postern.Server do
         nil ->
           nil
       end
+
+    {:reply, reply, lsp}
+  end
+
+  def handle_request(%TextDocumentInlayHint{params: params}, lsp) do
+    reply =
+      live_feature_result(lsp, params.text_document.uri, fn _uri, text, snapshot ->
+        LiveFeatures.inlay_hints(text, snapshot)
+      end)
+
+    {:reply, reply, lsp}
+  end
+
+  def handle_request(%TextDocumentCodeAction{params: params}, lsp) do
+    reply =
+      live_feature_result(lsp, params.text_document.uri, fn uri, _text, snapshot ->
+        LiveFeatures.code_actions(uri, snapshot)
+      end)
 
     {:reply, reply, lsp}
   end
@@ -203,7 +240,14 @@ defmodule Postern.Server do
     base_options =
       if is_nil(initialization_options), do: %{}, else: Map.new(initialization_options)
 
-    options = Map.merge(base_options, document_options(lsp))
+    live_oracle = Map.get(lsp.assigns, :live_oracle)
+    live_snapshot = if is_pid(live_oracle), do: LiveOracle.snapshot(live_oracle), else: nil
+
+    options =
+      base_options
+      |> Map.merge(document_options(lsp))
+      |> Map.put(:live_snapshot, live_snapshot)
+      |> Map.put(:live_configured, LiveOracle.connection_options(base_options) != nil)
 
     diagnostics =
       Diagnostics.for_document(uri, text, options)
@@ -211,6 +255,17 @@ defmodule Postern.Server do
     GenLSP.notify(lsp, %TextDocumentPublishDiagnostics{
       params: %PublishDiagnosticsParams{uri: uri, version: version, diagnostics: diagnostics}
     })
+  end
+
+  defp live_feature_result(lsp, uri, callback) do
+    case DocumentStore.get(lsp, uri) do
+      %{text: text} ->
+        snapshot = LiveOracle.snapshot(lsp.assigns.live_oracle)
+        callback.(uri, text, snapshot)
+
+      nil ->
+        []
+    end
   end
 
   defp document_options(lsp) do

@@ -21,7 +21,14 @@ defmodule Postern.Diagnostics do
 
     case kind do
       :postgresql_conf ->
-        Postern.PostgresqlConfDiagnostics.diagnostics(text, initialization_options)
+        offline = Postern.PostgresqlConfDiagnostics.diagnostics(text, initialization_options)
+
+        offline ++
+          Postern.LiveDiagnostics.for_document(
+            uri,
+            option(initialization_options, :live_snapshot),
+            option(initialization_options, :live_configured) || false
+          )
 
       :pg_hba_conf ->
         Postern.PgHbaDiagnostics.diagnostics(text, option(initialization_options, :pg_ident_text))
