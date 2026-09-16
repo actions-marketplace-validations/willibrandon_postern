@@ -188,7 +188,7 @@ defmodule Postern.Features do
 
   defp live_values(options) do
     case option(options, :live_snapshot) do
-      {:ok, snapshot} ->
+      %{} = snapshot ->
         %{
           databases: Enum.map(snapshot[:databases] || [], & &1["datname"]),
           roles: Enum.map(snapshot[:roles] || [], & &1["rolname"])

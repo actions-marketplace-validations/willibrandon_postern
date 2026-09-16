@@ -124,6 +124,42 @@ hover = receive_response()["result"]
 assert "shared_buffers" in hover["contents"]["value"], hover
 print("hover: ok")
 
+# The requests below crashed 0.1.0 when a live server was reachable, because the
+# oracle handed back {:ok, map} where the features expected the map.
+hba_path = os.path.join(workdir, "pg_hba.conf")
+with open(hba_path, "w", encoding="utf-8") as handle:
+    handle.write("host all all 0.0.0.0/0 trust\nhost all all 10.0.0.0/8 scram-sha-256\n")
+hba_uri = "file:///" + hba_path.replace(os.sep, "/").lstrip("/")
+send(
+    {
+        "jsonrpc": "2.0",
+        "method": "textDocument/didOpen",
+        "params": {
+            "textDocument": {"uri": hba_uri, "languageId": "pg-hba", "version": 1, "text": open(hba_path).read()}
+        },
+    }
+)
+hba_diagnostics = None
+while hba_diagnostics is None:
+    message = receive()
+    if message.get("method") == "textDocument/publishDiagnostics" and message["params"]["uri"] == hba_uri:
+        hba_diagnostics = message["params"]["diagnostics"]
+    elif message.get("method") == "window/logMessage":
+        print("log:", message["params"]["message"])
+assert any("shadows it" in d["message"] for d in hba_diagnostics), hba_diagnostics
+print("pg_hba diagnostics: ok")
+
+for request_id, method, params in (
+    (10, "textDocument/inlayHint", {"textDocument": {"uri": hba_uri}, "range": {"start": {"line": 0, "character": 0}, "end": {"line": 2, "character": 0}}}),
+    (11, "textDocument/codeAction", {"textDocument": {"uri": hba_uri}, "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 0}}, "context": {"diagnostics": []}}),
+    (12, "textDocument/inlayHint", {"textDocument": {"uri": uri}, "range": {"start": {"line": 0, "character": 0}, "end": {"line": 3, "character": 0}}}),
+    (13, "textDocument/codeAction", {"textDocument": {"uri": uri}, "range": {"start": {"line": 1, "character": 0}, "end": {"line": 1, "character": 0}}, "context": {"diagnostics": []}}),
+):
+    send({"jsonrpc": "2.0", "id": request_id, "method": method, "params": params})
+    reply = receive_response()
+    assert "error" not in reply, (method, reply)
+    print("%s: ok (%d items)" % (method, len(reply.get("result") or [])))
+
 send({"jsonrpc": "2.0", "id": 3, "method": "shutdown", "params": None})
 receive_response()
 send({"jsonrpc": "2.0", "method": "exit", "params": None})

@@ -65,9 +65,14 @@ defmodule Postern.LiveOracle do
   @spec status(pid()) :: :disabled | :connecting | :connected | :unreachable
   def status(oracle), do: GenServer.call(oracle, :status)
 
-  @doc "Fetches one consistent live snapshot, or an availability error."
-  @spec snapshot(pid()) :: {:ok, map()} | {:error, :disabled | :unreachable}
-  def snapshot(oracle), do: GenServer.call(oracle, :snapshot, 20_000)
+  @doc "Fetches one consistent live snapshot as a map, or an availability error."
+  @spec snapshot(pid()) :: map() | {:error, :disabled | :unreachable}
+  def snapshot(oracle) do
+    case GenServer.call(oracle, :snapshot, 20_000) do
+      {:ok, snapshot} -> snapshot
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
   @doc "Executes one of the live code-action commands."
   @spec execute(pid(), String.t(), list()) :: {:ok, term()} | {:error, atom() | term()}

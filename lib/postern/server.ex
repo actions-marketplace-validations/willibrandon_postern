@@ -279,14 +279,15 @@ defmodule Postern.Server do
     })
   end
 
+  # Inlay hints and code actions describe settings, so only postgresql.conf
+  # documents get them.
   defp live_feature_result(lsp, uri, callback) do
-    case DocumentStore.get(lsp, uri) do
-      %{text: text} ->
-        snapshot = LiveOracle.snapshot(current_assigns(lsp).live_oracle)
-        callback.(uri, text, snapshot)
-
-      nil ->
-        []
+    with :postgresql_conf <- FileKind.detect(uri),
+         %{text: text} <- DocumentStore.get(lsp, uri) do
+      snapshot = LiveOracle.snapshot(current_assigns(lsp).live_oracle)
+      callback.(uri, text, snapshot)
+    else
+      _ -> []
     end
   end
 

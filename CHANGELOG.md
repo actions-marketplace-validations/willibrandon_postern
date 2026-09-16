@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1] - 2026-09-16
+
+- Fixed a crash when a live server was reachable: the oracle returned its snapshot wrapped in
+  `{:ok, map}` while diagnostics, completion, inlay hints and code actions expected the map, so
+  every request on an open file failed once a connection succeeded. Inlay hints and code actions
+  now apply to `postgresql.conf` only.
+
 ## [0.1.0] - 2026-09-16
 
 - Language server for `postgresql.conf`, `postgresql.auto.conf`, `pg_hba.conf` and
@@ -11,5 +18,6 @@
   connection string is configured, so the editor shows the server's own parse errors before a
   reload.
 - Hover, completion, inlay hints and code actions.
-- `postern check` for scripts and CI.
+- `postern check` for scripts and CI, plus `--help` and `--version`.
+- Logs go to stderr without colour, so they can never corrupt the protocol stream.
 - Single-file binaries for Linux, macOS and Windows, and a VS Code extension.

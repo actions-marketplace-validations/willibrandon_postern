@@ -63,8 +63,7 @@ defmodule Postern.FeaturesTest do
   end
 
   test "live HBA completion includes database and role names" do
-    snapshot =
-      {:ok, %{databases: [%{"datname" => "billing"}], roles: [%{"rolname" => "app_user"}]}}
+    snapshot = %{databases: [%{"datname" => "billing"}], roles: [%{"rolname" => "app_user"}]}
 
     database_items =
       Features.completion(

@@ -99,6 +99,11 @@ jobs:
           cache-dependency-path: editors/vscode/package-lock.json
       - run: npm ci
       - run: npm run verify
+      - name: Start PostgreSQL
+        run: |
+          docker run -d --name postgres -e POSTGRES_HOST_AUTH_METHOD=trust -p 5432:5432 postgres:17
+          for i in $(seq 1 30); do docker exec postgres pg_isready -U postgres && break; sleep 1; done
+          { echo "PGHOST=127.0.0.1"; echo "PGPORT=5432"; echo "PGUSER=postgres"; } >> "$GITHUB_ENV"
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: postern-linux-x64
