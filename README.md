@@ -128,7 +128,18 @@ Zed support is via the generic LSP client (owner will write the extension). Add 
 
 ### VS Code
 
-Owner will write the VS Code client. Any VS Code LSP client that launches `postern` over stdio works.
+ElixirLS can be used for Elixir syntax highlighting, completion, diagnostics,
+navigation and formatting. ElixirLS handles `.ex` and `.exs` files; it is not
+the Postern LSP client for PostgreSQL configuration files.
+
+Postern pins `gen_lsp 0.9.x` intentionally. ElixirLS 0.31.x vendors the same
+`GenLSP.*` module names and its protocol uses `schematic/0`; newer `gen_lsp`
+releases use `schema/0` and collide while ElixirLS compiles project
+dependencies in-process. If ElixirLS was already running before this pin was
+changed, run **Developer: Reload Window** once.
+
+The future Postern VS Code client can independently launch `postern` over
+stdio for `postgresql.conf`, `pg_hba.conf`, and `pg_ident.conf`.
 
 ## Configuration
 

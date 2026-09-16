@@ -20,13 +20,16 @@ defmodule Postern.Server do
   alias GenLSP.Notifications.TextDocumentDidChange
   alias GenLSP.Notifications.TextDocumentDidClose
   alias GenLSP.Notifications.TextDocumentDidOpen
+  alias GenLSP.Notifications.TextDocumentPublishDiagnostics
   alias GenLSP.Requests.Initialize
   alias GenLSP.Requests.Shutdown
   alias GenLSP.Structures.InitializeParams
   alias GenLSP.Structures.InitializeResult
+  alias GenLSP.Structures.PublishDiagnosticsParams
   alias GenLSP.Structures.SaveOptions
   alias GenLSP.Structures.ServerCapabilities
   alias GenLSP.Structures.TextDocumentSyncOptions
+  alias Postern.Diagnostics
   alias Postern.DocumentStore
 
   @server_name "postern"
@@ -42,8 +45,11 @@ defmodule Postern.Server do
   """
   @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(opts) do
-    {args, opts} = Keyword.split(opts, [:test_mode])
-    GenLSP.start_link(__MODULE__, args, opts)
+    {args, gen_opts} = Keyword.split(opts, [:test_mode])
+
+    gen_opts = Keyword.take(gen_opts, [:buffer, :name])
+
+    GenLSP.start_link(__MODULE__, args, gen_opts)
   end
 
   # Callbacks
@@ -97,8 +103,8 @@ defmodule Postern.Server do
   end
 
   def handle_notification(%ExitNotification{}, lsp) do
-    exit_code = Map.get(assigns(lsp), :exit_code, 0)
-    test_mode = Map.get(assigns(lsp), :test_mode, false)
+    exit_code = Map.get(lsp.assigns, :exit_code, 0)
+    test_mode = Map.get(lsp.assigns, :test_mode, false)
     test_env = Code.ensure_loaded?(Mix) and Mix.env() == :test
 
     unless test_mode or test_env do
@@ -111,6 +117,7 @@ defmodule Postern.Server do
   def handle_notification(%TextDocumentDidOpen{params: params}, lsp) do
     doc = params.text_document
     lsp = DocumentStore.put(lsp, doc.uri, doc.text, doc.version, doc.language_id)
+    publish_diagnostics(lsp, doc.uri, doc.text, doc.version)
     {:noreply, lsp}
   end
 
@@ -127,17 +134,31 @@ defmodule Postern.Server do
       end
 
     lsp = DocumentStore.update(lsp, uri, text, version)
+    publish_diagnostics(lsp, uri, text, version)
     {:noreply, lsp}
   end
 
   def handle_notification(%TextDocumentDidClose{params: params}, lsp) do
     uri = params.text_document.uri
     lsp = DocumentStore.delete(lsp, uri)
+
+    GenLSP.notify(lsp, %TextDocumentPublishDiagnostics{
+      params: %PublishDiagnosticsParams{uri: uri, diagnostics: []}
+    })
+
     {:noreply, lsp}
   end
 
   # Gracefully ignore other notifications (didSave, etc.)
   def handle_notification(_notification, lsp) do
     {:noreply, lsp}
+  end
+
+  defp publish_diagnostics(lsp, uri, text, version) do
+    diagnostics = Diagnostics.for_document(uri, text)
+
+    GenLSP.notify(lsp, %TextDocumentPublishDiagnostics{
+      params: %PublishDiagnosticsParams{uri: uri, version: version, diagnostics: diagnostics}
+    })
   end
 end

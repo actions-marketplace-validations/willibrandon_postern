@@ -22,7 +22,10 @@ defmodule Postern.MixProject do
 
   defp deps do
     [
-      {:gen_lsp, "~> 0.11.3"},
+      # ElixirLS 0.31.x vendors the GenLSP protocol using the schematic/0 API.
+      # gen_lsp 0.9 is the matching release; newer releases use schema/0 and
+      # collide with ElixirLS when it compiles project dependencies in-process.
+      {:gen_lsp, "~> 0.9.0"},
       {:nimble_parsec, "~> 1.4"},
       {:jason, "~> 1.4"},
       {:postgrex, "~> 0.22.4"},

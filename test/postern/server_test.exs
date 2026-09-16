@@ -1,13 +1,25 @@
 defmodule Postern.ServerTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   import GenLSP.Test
 
-  alias GenLSP.Assigns
-
   setup do
-    server = server(Postern.Server, test_mode: true)
+    id = System.unique_integer([:positive])
+
+    server =
+      server(Postern.Server,
+        test_mode: true,
+        buffer_id: :"buffer_#{id}",
+        assigns_id: :"assigns_#{id}",
+        task_supervisor_id: :"task_supervisor_#{id}",
+        lsp_id: :"lsp_#{id}"
+      )
+
     client = client(server)
+
+    on_exit(fn ->
+      :gen_tcp.close(client.socket)
+    end)
 
     %{server: server, client: client}
   end
@@ -59,7 +71,7 @@ defmodule Postern.ServerTest do
 
       # Give the server a moment to process the assign
       Process.sleep(50)
-      assigns = Assigns.get(server.assigns)
+      assigns = server_assigns(server)
       assert assigns[:root_uri] == "file:///workspace"
       assert assigns[:initialization_options] == %{"pg" => 16}
     end
@@ -91,7 +103,7 @@ defmodule Postern.ServerTest do
 
       assert_result(11, nil)
       Process.sleep(50)
-      assigns = Assigns.get(server.assigns)
+      assigns = server_assigns(server)
       assert assigns[:exit_code] == 0
     end
 
@@ -134,7 +146,7 @@ defmodule Postern.ServerTest do
       })
 
       Process.sleep(50)
-      docs = Assigns.get(server.assigns)[:documents]
+      docs = server_assigns(server)[:documents]
       assert docs[uri].text == "shared_buffers = 128MB\n"
       assert docs[uri].version == 1
       assert docs[uri].kind == :postgresql_conf
@@ -158,7 +170,7 @@ defmodule Postern.ServerTest do
       })
 
       Process.sleep(50)
-      docs = Assigns.get(server.assigns)[:documents]
+      docs = server_assigns(server)[:documents]
       assert docs[uri].kind == :pg_hba_conf
     end
 
@@ -190,7 +202,7 @@ defmodule Postern.ServerTest do
       })
 
       Process.sleep(50)
-      docs = Assigns.get(server.assigns)[:documents]
+      docs = server_assigns(server)[:documents]
       assert docs[uri].text == "shared_buffers = 256MB\n"
       assert docs[uri].version == 2
     end
@@ -212,7 +224,7 @@ defmodule Postern.ServerTest do
       })
 
       Process.sleep(50)
-      assert Map.has_key?(Assigns.get(server.assigns)[:documents], uri)
+      assert Map.has_key?(server_assigns(server)[:documents], uri)
 
       notify(client, %{
         "jsonrpc" => "2.0",
@@ -221,7 +233,7 @@ defmodule Postern.ServerTest do
       })
 
       Process.sleep(50)
-      refute Map.has_key?(Assigns.get(server.assigns)[:documents], uri)
+      refute Map.has_key?(server_assigns(server)[:documents], uri)
     end
 
     test "later didOpen overrides earlier", %{server: server, client: client} do
@@ -256,7 +268,7 @@ defmodule Postern.ServerTest do
       })
 
       Process.sleep(50)
-      docs = Assigns.get(server.assigns)[:documents]
+      docs = server_assigns(server)[:documents]
       assert docs[uri].text == "b = 2\n"
       assert docs[uri].version == 2
     end
@@ -284,5 +296,9 @@ defmodule Postern.ServerTest do
       assert result["serverInfo"]["name"] == "postern"
       assert get_in(result, ["capabilities", "textDocumentSync", "openClose"]) == true
     end
+  end
+
+  defp server_assigns(server) do
+    :sys.get_state(server.lsp).assigns
   end
 end
