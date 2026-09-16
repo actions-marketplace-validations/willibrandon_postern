@@ -114,6 +114,53 @@ defmodule Postern.ServerTest do
     end
   end
 
+  describe "workspace/executeCommand" do
+    setup %{client: client} do
+      request(client, %{
+        "jsonrpc" => "2.0",
+        "id" => 300,
+        "method" => "initialize",
+        "params" => %{"processId" => nil, "rootUri" => nil, "capabilities" => %{}}
+      })
+
+      assert_result(300, _)
+      :ok
+    end
+
+    test "postern.disableTrustHints stops the hint for open pg_hba.conf files", %{client: client} do
+      uri = "file:///etc/pg_hba.conf"
+
+      notify(client, %{
+        "jsonrpc" => "2.0",
+        "method" => "textDocument/didOpen",
+        "params" => %{
+          "textDocument" => %{
+            "uri" => uri,
+            "languageId" => "conf",
+            "version" => 1,
+            "text" => "host all all 10.0.0.0/8 trust\n"
+          }
+        }
+      })
+
+      assert_notification("textDocument/publishDiagnostics", %{
+        "uri" => ^uri,
+        "diagnostics" => [%{"code" => "trust"}]
+      })
+
+      request(client, %{
+        "jsonrpc" => "2.0",
+        "id" => 301,
+        "method" => "workspace/executeCommand",
+        "params" => %{"command" => "postern.disableTrustHints", "arguments" => []}
+      })
+
+      assert_result(301, nil)
+
+      assert_notification("textDocument/publishDiagnostics", %{"uri" => ^uri, "diagnostics" => []})
+    end
+  end
+
   describe "textDocument/didOpen, didChange, didClose" do
     setup %{server: _server, client: client} do
       # Ensure initialized

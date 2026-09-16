@@ -184,6 +184,31 @@ defmodule Postern.Server do
     {:reply, Features.code_actions(params.context.diagnostics || []) ++ live, lsp}
   end
 
+  # The quick fix on a trust hint. Handling it here means it works from any
+  # editor that runs code action commands; the hint stays off until the
+  # server restarts. An editor that remembers the choice restarts the server
+  # with `reportTrust` in its initialization options instead.
+  def handle_request(
+        %WorkspaceExecuteCommand{params: %{command: "postern.disableTrustHints"}},
+        lsp
+      ) do
+    options =
+      case Map.get(current_assigns(lsp), :initialization_options) do
+        nil -> %{}
+        options -> Map.new(options)
+      end
+      |> Map.drop([:reportTrust])
+      |> Map.put("reportTrust", false)
+
+    lsp = assign(lsp, initialization_options: options)
+
+    for {uri, document} <- DocumentStore.all(lsp), document.kind == :pg_hba_conf do
+      publish_diagnostics(lsp, uri, document.text, document.version)
+    end
+
+    {:reply, nil, lsp}
+  end
+
   def handle_request(%WorkspaceExecuteCommand{params: params}, lsp) do
     arguments = params.arguments || []
     uri = List.first(arguments)
