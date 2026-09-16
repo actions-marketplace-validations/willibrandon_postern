@@ -12,8 +12,8 @@ This file records implementation progress.
 | 3. `pg_hba.conf` / `pg_ident.conf` diagnostics | Complete | Added CIDR/netmask validation, method-option checks, unsafe-method warnings, shadow/reject detection, and ident-map reference/unused-map diagnostics. |
 | 4. Hover / completion | Complete | Added catalog-backed hover, PostgreSQL setting/value completion, HBA keyword completion, and LSP request tests. |
 | 5. Live oracle | Complete | Added supervised reconnecting Postgrex snapshots, live file-setting diagnostics, inlay hints and code actions with offline fallback. |
-| 6. CLI / packaging | In progress | Added `postern check`, plain/JSON output, Burrito targets and CI; release build remains to verify. |
-| 7. Editor smoke tests | Not started | Add Neovim and Helix scripts; document Zed and VS Code. |
+| 6. CLI / packaging | Complete | Added `postern check`, plain/JSON output, Burrito targets and CI; all three target builds completed. |
+| 7. Editor smoke tests | In progress | Added Neovim and Helix smoke scripts. |
 
 ## Checks
 
@@ -32,8 +32,7 @@ This file records implementation progress.
 
 ## Current work item
 
-The native Linux and macOS Burrito targets built. The Windows target needs
-7-Zip on the build host. Then add editor smoke tests.
+Run the editor smoke scripts in environments with the required clients.
 
 The final check must cover the requirements in `docs/original-brief.md` with
 source, tests, fixtures or command output.
