@@ -27,7 +27,7 @@ This file records implementation progress.
 - `mix compile --warnings-as-errors` passes after the current edits.
 - ExUnit is configured for normal parallel scheduling; no global `max_cases: 1`
   workaround is used. LSP tests use unique supervised-process names.
-- Current gates pass: 57 parallel ExUnit tests, `mix compile
+- Current gates pass: 58 parallel ExUnit tests, `mix compile
   --warnings-as-errors`, `mix credo --strict`, and `mix format --check-formatted`.
 
 ## Current work item
