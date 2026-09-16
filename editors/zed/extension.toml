@@ -1,7 +1,7 @@
 id = "postern"
 name = "Postern"
 description = "PostgreSQL configuration files: highlighting for postgresql.conf, pg_hba.conf and pg_ident.conf, and the Postern language server."
-version = "0.1.6"
+version = "0.1.7"
 schema_version = 1
 authors = ["Brandon Williams"]
 repository = "https://github.com/willibrandon/postern"

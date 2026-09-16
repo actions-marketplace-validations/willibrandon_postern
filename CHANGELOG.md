@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.7] - 2026-09-16
 
 - The server advertises its commands, which Zed and Neovim require before they will run a code
   action's command, and finds trust hints in the requested range itself instead of relying on

@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.7] - 2026-09-16
 
 - The trust quick fix command is registered by the language client, since the server now advertises
   it, and handled through the client's middleware. It still saves the setting.
