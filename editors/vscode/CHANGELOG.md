@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.3] - 2026-09-16
 
 - Trust on a non-local `pg_hba.conf` rule is a hint instead of a warning, and a new
   `postern.hba.reportTrust` setting, also reachable as a quick fix on the hint, turns it off.
