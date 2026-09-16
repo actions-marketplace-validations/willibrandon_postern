@@ -27,14 +27,39 @@ defmodule Postern.Diagnostics do
           Postern.LiveDiagnostics.for_document(
             uri,
             option(initialization_options, :live_snapshot),
-            option(initialization_options, :live_configured) || false
+            option(initialization_options, :live_configured) || false,
+            :postgresql_conf
           )
 
       :pg_hba_conf ->
-        Postern.PgHbaDiagnostics.diagnostics(text, option(initialization_options, :pg_ident_text))
+        offline =
+          Postern.PgHbaDiagnostics.diagnostics(
+            text,
+            option(initialization_options, :pg_ident_text)
+          )
+
+        offline ++
+          Postern.LiveDiagnostics.for_document(
+            uri,
+            option(initialization_options, :live_snapshot),
+            option(initialization_options, :live_configured) || false,
+            :pg_hba_conf
+          )
 
       :pg_ident_conf ->
-        Postern.PgIdentDiagnostics.diagnostics(text, option(initialization_options, :pg_hba_text))
+        offline =
+          Postern.PgIdentDiagnostics.diagnostics(
+            text,
+            option(initialization_options, :pg_hba_text)
+          )
+
+        offline ++
+          Postern.LiveDiagnostics.for_document(
+            uri,
+            option(initialization_options, :live_snapshot),
+            option(initialization_options, :live_configured) || false,
+            :pg_ident_conf
+          )
 
       :unknown ->
         []

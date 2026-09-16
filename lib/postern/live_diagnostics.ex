@@ -11,16 +11,27 @@ defmodule Postern.LiveDiagnostics do
   Produces diagnostics from a live snapshot for the open document.
   """
   @spec for_document(String.t(), map() | {:error, atom()} | nil, boolean()) :: [Diagnostic.t()]
-  def for_document(_uri, nil, _configured), do: []
-  def for_document(_uri, {:error, :disabled}, _configured), do: []
+  def for_document(uri, snapshot, configured),
+    do: for_document(uri, snapshot, configured, :postgresql_conf)
 
-  def for_document(_uri, {:error, _reason}, true) do
+  @spec for_document(String.t(), map() | {:error, atom()} | nil, boolean(), atom()) :: [
+          Diagnostic.t()
+        ]
+  def for_document(_uri, nil, _configured, _kind), do: []
+  def for_document(_uri, {:error, :disabled}, _configured, _kind), do: []
+
+  def for_document(_uri, {:error, _reason}, true, _kind) do
     [diagnostic(0, "PostgreSQL server is unreachable; using offline diagnostics", 3)]
   end
 
-  def for_document(_uri, {:error, _reason}, false), do: []
+  def for_document(_uri, {:error, _reason}, false, _kind), do: []
 
-  def for_document(uri, %{file_settings: file_settings, settings: settings}, _configured) do
+  def for_document(
+        uri,
+        %{file_settings: file_settings, settings: settings},
+        _configured,
+        :postgresql_conf
+      ) do
     file_diagnostics =
       file_settings
       |> Enum.filter(fn row ->
@@ -44,6 +55,22 @@ defmodule Postern.LiveDiagnostics do
       end)
 
     file_diagnostics ++ restart_diagnostics
+  end
+
+  def for_document(uri, %{hba_rules: rows}, _configured, :pg_hba_conf),
+    do: source_row_diagnostics(rows, uri, "file_name", "line_number")
+
+  def for_document(uri, %{ident_mappings: rows}, _configured, :pg_ident_conf),
+    do: source_row_diagnostics(rows, uri, "file_name", "line_number")
+
+  defp source_row_diagnostics(rows, uri, file_key, line_key) do
+    Enum.flat_map(rows, fn row ->
+      if is_binary(row["error"]) and row["error"] != "" and same_file?(row[file_key], uri) do
+        [diagnostic(row[line_key] || 1, row["error"], 1)]
+      else
+        []
+      end
+    end)
   end
 
   defp same_file?(nil, _uri), do: false
