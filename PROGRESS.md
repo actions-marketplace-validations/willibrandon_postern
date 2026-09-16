@@ -24,8 +24,8 @@ the end of each numbered phase and before starting the next one.
 - The project uses `gen_lsp 0.9.x`; the ElixirLS extension was removed from
   the remote extension set because it vendors the same `GenLSP.*` module names
   and conflicts with this project while compiling dependencies. The
-  `mjmcloug.vscode-elixir` extension remains available for syntax and
-  ElixirSense completion.
+  Expert remains available for syntax, hover documentation, completion and
+  diagnostics.
 - PostgreSQL fixtures have been copied from a PostgreSQL installation into
   `test/fixtures/`.
 - Fixtures copied from the container are under `test/fixtures/`.

@@ -128,9 +128,10 @@ Zed support is via the generic LSP client (owner will write the extension). Add 
 
 ### VS Code
 
-The `mjmcloug.vscode-elixir` extension can be used for Elixir syntax
-highlighting and ElixirSense-based completion. It handles `.ex` and `.exs`
-files; it is not the Postern LSP client for PostgreSQL configuration files.
+The Expert extension can be used for Elixir syntax highlighting, hover
+documentation, completion, diagnostics, navigation and formatting. It handles
+`.ex` and `.exs` files; it is not the Postern LSP client for PostgreSQL
+configuration files.
 
 The future Postern VS Code client can independently launch `postern` over
 stdio for `postgresql.conf`, `pg_hba.conf`, and `pg_ident.conf`.
