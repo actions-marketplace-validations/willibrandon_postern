@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+- A Neovim plugin in `editors/nvim` for Neovim 0.11 or newer: filetypes for the four files and
+  the server enabled through Neovim's own client, with no nvim-lspconfig needed.
+
 ## [0.1.5] - 2026-09-16
 
 - The VS Code extension logs what the server writes to stderr at the level the line states, so

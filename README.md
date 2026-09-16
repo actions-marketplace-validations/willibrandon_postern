@@ -34,14 +34,15 @@ or [Open VSX](https://open-vsx.org/extension/willibrandon/postern). It bundles t
 
 ### Neovim
 
+Neovim 0.11 or newer. Put `editors/nvim` from a checkout on the runtime path, for example with
+lazy.nvim:
+
 ```lua
-vim.lsp.config("postern", {
-  cmd = { "postern" },
-  filetypes = { "conf" },
-  root_markers = { "postgresql.conf", "pg_hba.conf", ".git" },
-})
-vim.lsp.enable("postern")
+{ dir = "~/src/postern/editors/nvim" }
 ```
+
+It gives the four files their filetypes and enables the server, which must be on your `PATH`.
+See [editors/nvim/README.md](editors/nvim/README.md).
 
 ### Helix
 
