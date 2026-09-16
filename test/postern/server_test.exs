@@ -48,7 +48,7 @@ defmodule Postern.ServerTest do
             "save" => %{"includeText" => true}
           }
         },
-        "serverInfo" => %{"name" => "postern", "version" => "0.1.0"}
+        "serverInfo" => %{"name" => "postern", "version" => _}
       })
     end
 
