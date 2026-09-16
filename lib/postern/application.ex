@@ -7,8 +7,11 @@ defmodule Postern.Application do
   def start(_type, _args) do
     env = if Code.ensure_loaded?(Mix), do: Mix.env(), else: :prod
 
-    if System.argv() != [] and hd(System.argv()) == "check" do
-      System.halt(Postern.CLI.run(System.argv()))
+    args = runtime_args()
+
+    case Enum.find_index(args, &(&1 == "check")) do
+      nil -> :ok
+      index -> System.halt(Postern.CLI.run(Enum.drop(args, index)))
     end
 
     children =
@@ -23,5 +26,9 @@ defmodule Postern.Application do
 
     opts = [strategy: :one_for_one, name: Postern.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  defp runtime_args do
+    Postern.RuntimeArgs.argv()
   end
 end

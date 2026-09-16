@@ -16,7 +16,7 @@ command = "$bin"
 [[language]]
 name = "postgresql"
 scope = "source.postgresql"
-file-types = ["postgresql.conf"]
+file-types = ["conf"]
 language-servers = ["postern"]
 EOF
 
