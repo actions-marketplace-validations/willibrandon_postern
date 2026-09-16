@@ -11,8 +11,8 @@ the end of each numbered phase and before starting the next one.
 | 1. Parsers | Complete | Three NimbleParsec-backed parser modules, fixture round trips, token spans, and exact parse-error diagnostics; committed after all gates passed. |
 | 2. Catalogs / `postgresql.conf` diagnostics | Complete | Generated pg13–pg18 catalogs from `pg_settings`; added catalog loading, version selection, Jaro suggestions, type/range/enum/unit checks, duplicate hints, removed-setting warnings, and restart information. |
 | 3. `pg_hba.conf` / `pg_ident.conf` diagnostics | Complete | Added CIDR/netmask validation, method-option checks, unsafe-method warnings, shadow/reject detection, and ident-map reference/unused-map diagnostics. |
-| 4. Hover / completion | In progress | Add catalog-backed hover and context-sensitive completion. |
-| 5. Live oracle | Not started | Read `postgrex` source before implementing supervision and queries. |
+| 4. Hover / completion | Complete | Added catalog-backed hover, PostgreSQL setting/value completion, HBA keyword completion, and LSP request tests. |
+| 5. Live oracle | In progress | Read `postgrex` source; add supervised connection and live catalog/config queries. |
 | 6. CLI / packaging | Not started | Add `postern check`, JSON output, Burrito targets, and CI. |
 | 7. Editor smoke tests | Not started | Add Neovim and Helix scripts; document Zed and VS Code. |
 
@@ -38,8 +38,8 @@ the end of each numbered phase and before starting the next one.
 
 ## Current work item
 
-Begin Phase 4 by adding catalog-backed hover and context-sensitive completion
-requests with fixture-backed tests.
+Begin Phase 5 by adding the supervised Postgrex live oracle and graceful
+offline fallback.
 
 The ElixirLS extension is intentionally not used for this project because its
 vendored `GenLSP.*` modules conflict with Postern's `gen_lsp` dependency.

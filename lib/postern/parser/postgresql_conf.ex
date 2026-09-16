@@ -20,7 +20,7 @@ defmodule Postern.Parser.PostgresqlConf do
   opt_whitespace = ascii_string([?\s, ?\t], min: 0)
 
   # Identifier: setting name — letters, digits, underscore, dot, dash
-  # We allow any run of these; validation is done in diagnostics phase.
+  # We allow any run of these; validation is performed by the diagnostics layer.
   identifier =
     ascii_string([?a..?z, ?A..?Z, ?0..?9, ?_, ?., ?-], min: 1)
     |> label("setting name")

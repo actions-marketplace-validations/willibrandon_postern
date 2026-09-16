@@ -64,16 +64,14 @@ Target Postgres version is resolved in order:
 
 ## Development
 
-Phases (see `AGENTS.md`):
+Run the complete verification suite before submitting changes:
 
-0. Skeleton — `GenLSP` server with in-memory document store.
-1. Parsers — three `NimbleParsec` grammars with spans.
-2. Catalogs & offline `postgresql.conf` diagnostics.
-3. Offline `pg_hba.conf` / `pg_ident.conf` diagnostics.
-4. Hover & completion.
-5. Live oracle via `Postgrex`.
-6. CLI & Burrito packaging.
-7. Editor smoke tests.
+```sh
+mix test
+mix credo --strict
+mix format --check-formatted
+mix compile --warnings-as-errors
+```
 
 Ground rules:
 

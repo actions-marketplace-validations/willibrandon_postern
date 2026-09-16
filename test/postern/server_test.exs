@@ -298,6 +298,65 @@ defmodule Postern.ServerTest do
     end
   end
 
+  describe "hover and completion" do
+    setup %{client: client} do
+      request(client, %{
+        "jsonrpc" => "2.0",
+        "id" => 300,
+        "method" => "initialize",
+        "params" => %{"processId" => nil, "rootUri" => nil, "capabilities" => %{}}
+      })
+
+      assert_result(300, _)
+
+      notify(client, %{
+        "jsonrpc" => "2.0",
+        "method" => "textDocument/didOpen",
+        "params" => %{
+          "textDocument" => %{
+            "uri" => "file:///tmp/postgresql.conf",
+            "languageId" => "conf",
+            "version" => 1,
+            "text" => "shared_buffers = 128MB\n"
+          }
+        }
+      })
+
+      Process.sleep(50)
+      :ok
+    end
+
+    test "answers textDocument/hover", %{client: client} do
+      request(client, %{
+        "jsonrpc" => "2.0",
+        "id" => 301,
+        "method" => "textDocument/hover",
+        "params" => %{
+          "textDocument" => %{"uri" => "file:///tmp/postgresql.conf"},
+          "position" => %{"line" => 0, "character" => 7}
+        }
+      })
+
+      assert_result(301, %{"contents" => %{"kind" => "markdown", "value" => value}})
+      assert value =~ "shared_buffers"
+    end
+
+    test "answers textDocument/completion", %{client: client} do
+      request(client, %{
+        "jsonrpc" => "2.0",
+        "id" => 302,
+        "method" => "textDocument/completion",
+        "params" => %{
+          "textDocument" => %{"uri" => "file:///tmp/postgresql.conf"},
+          "position" => %{"line" => 0, "character" => 7}
+        }
+      })
+
+      assert_result(302, %{"isIncomplete" => false, "items" => items})
+      assert Enum.any?(items, &(&1["label"] == "shared_buffers"))
+    end
+  end
+
   defp server_assigns(server) do
     :sys.get_state(server.lsp).assigns
   end

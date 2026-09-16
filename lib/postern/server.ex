@@ -8,8 +8,8 @@ defmodule Postern.Server do
   kept in an in-memory store keyed by URI, with the file kind detected
   from the basename.
 
-  The server is intentionally minimal in phase 0; diagnostics, hover
-  and completion are added in later phases.
+  Diagnostics, hover and completion are provided by the server alongside
+  document synchronization.
   """
 
   use GenLSP
@@ -23,6 +23,9 @@ defmodule Postern.Server do
   alias GenLSP.Notifications.TextDocumentPublishDiagnostics
   alias GenLSP.Requests.Initialize
   alias GenLSP.Requests.Shutdown
+  alias GenLSP.Requests.TextDocumentCompletion
+  alias GenLSP.Requests.TextDocumentHover
+  alias GenLSP.Structures.CompletionOptions
   alias GenLSP.Structures.InitializeParams
   alias GenLSP.Structures.InitializeResult
   alias GenLSP.Structures.PublishDiagnosticsParams
@@ -31,6 +34,7 @@ defmodule Postern.Server do
   alias GenLSP.Structures.TextDocumentSyncOptions
   alias Postern.Diagnostics
   alias Postern.DocumentStore
+  alias Postern.Features
   alias Postern.FileKind
 
   @server_name "postern"
@@ -86,7 +90,9 @@ defmodule Postern.Server do
           open_close: true,
           change: TextDocumentSyncKind.full(),
           save: %SaveOptions{include_text: true}
-        }
+        },
+        hover_provider: true,
+        completion_provider: %CompletionOptions{trigger_characters: [".", "="]}
       },
       server_info: %{name: @server_name, version: @server_version}
     }
@@ -96,6 +102,42 @@ defmodule Postern.Server do
 
   def handle_request(%Shutdown{}, lsp) do
     {:reply, nil, assign(lsp, exit_code: 0)}
+  end
+
+  def handle_request(%TextDocumentHover{params: params}, lsp) do
+    reply =
+      case DocumentStore.get(lsp, params.text_document.uri) do
+        %{text: text} ->
+          Features.hover(
+            params.text_document.uri,
+            text,
+            params.position,
+            Map.get(lsp.assigns, :initialization_options, %{})
+          )
+
+        nil ->
+          nil
+      end
+
+    {:reply, reply, lsp}
+  end
+
+  def handle_request(%TextDocumentCompletion{params: params}, lsp) do
+    reply =
+      case DocumentStore.get(lsp, params.text_document.uri) do
+        %{text: text} ->
+          Features.completion(
+            params.text_document.uri,
+            text,
+            params.position,
+            Map.get(lsp.assigns, :initialization_options, %{})
+          )
+
+        nil ->
+          nil
+      end
+
+    {:reply, reply, lsp}
   end
 
   @impl true
