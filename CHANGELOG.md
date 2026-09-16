@@ -8,6 +8,9 @@
   that does so in VS Code.
 - The shadowing check no longer treats `all` as covering `replication`, since PostgreSQL's `all`
   keyword never matches a replication connection.
+- The server halts as soon as the editor closes its input pipe. Before, that started a graceful
+  stop that could not complete under Burrito, so VS Code waited two seconds and killed the
+  process on every restart, and logged two formatter crashes on the way.
 
 ## [0.1.2] - 2026-09-16
 

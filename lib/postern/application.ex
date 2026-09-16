@@ -25,7 +25,7 @@ defmodule Postern.Application do
         []
       else
         [
-          {GenLSP.Buffer, communication: {GenLSP.Communication.Stdio, []}, name: GenLSP.Buffer},
+          {GenLSP.Buffer, communication: {Postern.Stdio, []}, name: GenLSP.Buffer},
           {GenLSP.Assigns, name: GenLSP.Assigns},
           {Task.Supervisor, name: Postern.TaskSupervisor},
           {Postern.Server,

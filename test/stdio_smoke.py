@@ -160,6 +160,19 @@ for request_id, method, params in (
     assert "error" not in reply, (method, reply)
     print("%s: ok (%d items)" % (method, len(reply.get("result") or [])))
 
+# An editor that closes the pipe without sending exit must not leave a runtime behind.
+second = subprocess.Popen([binary], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"processId": os.getpid(), "rootUri": None, "capabilities": {}}}).encode()
+second.stdin.write(b"Content-Length: %d\r\n\r\n" % len(body) + body)
+second.stdin.flush()
+second.stdout.read(20)  # wait until the server has answered something
+second.stdin.close()
+try:
+    print("exit after stdin closed:", second.wait(timeout=10))
+except subprocess.TimeoutExpired:
+    second.kill()
+    raise SystemExit("server kept running after its stdin closed")
+
 send({"jsonrpc": "2.0", "id": 3, "method": "shutdown", "params": None})
 receive_response()
 send({"jsonrpc": "2.0", "method": "exit", "params": None})
