@@ -193,6 +193,15 @@ jobs:
           mkdir -p server
           cp "$GITHUB_WORKSPACE/artifacts/binaries/postern-$VERSION-${{ matrix.binary }}" "server/${{ matrix.name }}"
           chmod 755 "server/${{ matrix.name }}"
+      - name: Exercise the binary over stdio
+        run: |
+          set +e
+          "./server/${{ matrix.name }}" check test/fixtures/postgresql.conf
+          code=$?
+          set -e
+          test "$code" -eq 1 || { echo "postern check exited with $code, expected 1" >&2; exit 1; }
+          python=$(command -v python3 || command -v python)
+          "$python" ../../test/stdio_smoke.py "./server/${{ matrix.name }}"
       - name: Test on Linux
         if: runner.os == 'Linux'
         run: xvfb-run -a npm test

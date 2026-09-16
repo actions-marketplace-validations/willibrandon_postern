@@ -104,5 +104,13 @@ jobs:
           name: postern-linux-x64
           path: editors/vscode/server
       - run: mv server/postern_linux_x86_64 server/postern && chmod 755 server/postern
+      - name: Exercise the binary over stdio
+        run: |
+          set +e
+          ./server/postern check test/fixtures/postgresql.conf
+          code=$?
+          set -e
+          test "$code" -eq 1 || { echo "postern check exited with $code, expected 1" >&2; exit 1; }
+          python3 ../../test/stdio_smoke.py ./server/postern
       - run: xvfb-run -a npm test
       - run: npm run package
