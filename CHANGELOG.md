@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+- The Zed extension asks the release for the asset names it actually has when it downloads the
+  server.
+
 ## [0.1.7] - 2026-09-16
 
 - The server advertises its commands, which Zed and Neovim require before they will run a code

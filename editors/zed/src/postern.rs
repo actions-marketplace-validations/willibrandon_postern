@@ -42,11 +42,11 @@ impl PosternExtension {
         // Release assets are named postern-<version>-<target>, with .exe on Windows.
         let (os, arch) = zed::current_platform();
         let target = match (os, arch) {
-            (zed::Os::Mac, zed::Architecture::Aarch64) => "macos_arm64",
-            (zed::Os::Mac, _) => "macos_x86_64",
-            (zed::Os::Linux, zed::Architecture::Aarch64) => "linux_aarch64",
-            (zed::Os::Linux, _) => "linux_x86_64",
-            (zed::Os::Windows, _) => "windows_x86_64.exe",
+            (zed::Os::Mac, zed::Architecture::Aarch64) => "darwin-arm64",
+            (zed::Os::Mac, _) => "darwin-x64",
+            (zed::Os::Linux, zed::Architecture::Aarch64) => "linux-arm64",
+            (zed::Os::Linux, _) => "linux-x64",
+            (zed::Os::Windows, _) => "win32-x64.exe",
         };
         let version = release.version.trim_start_matches('v');
         let asset_name = format!("postern-{version}-{target}");
