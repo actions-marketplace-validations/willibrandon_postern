@@ -31,6 +31,7 @@ defmodule Postern.Server do
   alias GenLSP.Structures.TextDocumentSyncOptions
   alias Postern.Diagnostics
   alias Postern.DocumentStore
+  alias Postern.FileKind
 
   @server_name "postern"
   @server_version "0.1.0"
@@ -155,11 +156,33 @@ defmodule Postern.Server do
   end
 
   defp publish_diagnostics(lsp, uri, text, version) do
+    initialization_options = Map.get(lsp.assigns, :initialization_options, %{})
+
+    base_options =
+      if is_nil(initialization_options), do: %{}, else: Map.new(initialization_options)
+
+    options = Map.merge(base_options, document_options(lsp))
+
     diagnostics =
-      Diagnostics.for_document(uri, text, Map.get(lsp.assigns, :initialization_options, %{}))
+      Diagnostics.for_document(uri, text, options)
 
     GenLSP.notify(lsp, %TextDocumentPublishDiagnostics{
       params: %PublishDiagnosticsParams{uri: uri, version: version, diagnostics: diagnostics}
     })
+  end
+
+  defp document_options(lsp) do
+    documents = DocumentStore.all(lsp)
+
+    %{
+      pg_hba_text: find_document_text(documents, :pg_hba_conf),
+      pg_ident_text: find_document_text(documents, :pg_ident_conf)
+    }
+  end
+
+  defp find_document_text(documents, kind) do
+    Enum.find_value(documents, fn {uri, document} ->
+      if FileKind.detect(uri) == kind, do: document.text
+    end)
   end
 end

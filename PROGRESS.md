@@ -10,8 +10,8 @@ the end of each numbered phase and before starting the next one.
 | 0. Skeleton | Complete | Commit `ef3ecb7`; `Postern.Server`, `Postern.DocumentStore`, `Postern.FileKind`, JSON-RPC tests. |
 | 1. Parsers | Complete | Three NimbleParsec-backed parser modules, fixture round trips, token spans, and exact parse-error diagnostics; committed after all gates passed. |
 | 2. Catalogs / `postgresql.conf` diagnostics | Complete | Generated pg13–pg18 catalogs from `pg_settings`; added catalog loading, version selection, Jaro suggestions, type/range/enum/unit checks, duplicate hints, removed-setting warnings, and restart information. |
-| 3. `pg_hba.conf` / `pg_ident.conf` diagnostics | In progress | Add CIDR, option, shadowing, and ident-map checks. |
-| 4. Hover / completion | Not started | Add LSP requests and fixture-backed ExUnit tests. |
+| 3. `pg_hba.conf` / `pg_ident.conf` diagnostics | Complete | Added CIDR/netmask validation, method-option checks, unsafe-method warnings, shadow/reject detection, and ident-map reference/unused-map diagnostics. |
+| 4. Hover / completion | In progress | Add catalog-backed hover and context-sensitive completion. |
 | 5. Live oracle | Not started | Read `postgrex` source before implementing supervision and queries. |
 | 6. CLI / packaging | Not started | Add `postern check`, JSON output, Burrito targets, and CI. |
 | 7. Editor smoke tests | Not started | Add Neovim and Helix scripts; document Zed and VS Code. |
@@ -38,8 +38,8 @@ the end of each numbered phase and before starting the next one.
 
 ## Current work item
 
-Begin Phase 3 by adding offline `pg_hba.conf` and `pg_ident.conf` diagnostics
-for addresses, method options, rule reachability, and ident-map references.
+Begin Phase 4 by adding catalog-backed hover and context-sensitive completion
+requests with fixture-backed tests.
 
 The ElixirLS extension is intentionally not used for this project because its
 vendored `GenLSP.*` modules conflict with Postern's `gen_lsp` dependency.

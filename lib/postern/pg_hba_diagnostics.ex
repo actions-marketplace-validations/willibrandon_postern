@@ -1,0 +1,335 @@
+defmodule Postern.PgHbaDiagnostics do
+  @moduledoc """
+  Offline diagnostics for `pg_hba.conf` rules.
+
+  The parser supplies the rule AST. This module validates addresses and
+  netmasks, authentication options, unsafe methods, rule reachability, and
+  ident-map references.
+  """
+
+  alias GenLSP.Structures.Diagnostic
+  alias GenLSP.Structures.Position
+  alias GenLSP.Structures.Range
+  alias Postern.Parser.PgHba
+  alias Postern.Parser.PgIdent
+
+  import Bitwise
+
+  @error 1
+  @warning 2
+
+  @host_types ~w(host hostssl hostnossl hostgssenc hostnogssenc)
+  @address_keywords ~w(all samehost samenet)
+
+  @doc """
+  Returns diagnostics for a `pg_hba.conf` document.
+
+  `ident_text` is optional and is used to validate `map=` references when the
+  corresponding `pg_ident.conf` document is open.
+  """
+  @spec diagnostics(String.t(), String.t() | nil) :: [Diagnostic.t()]
+  def diagnostics(text, ident_text \\ nil) when is_binary(text) do
+    {:ok, entries} = PgHba.parse(text)
+    parse_diagnostics = parser_diagnostics(entries)
+    rules = Enum.filter(entries, &(&1.type == :rule))
+    maps = ident_maps(ident_text)
+
+    rule_diagnostics =
+      rules
+      |> Enum.with_index()
+      |> Enum.flat_map(fn {rule, index} ->
+        previous = Enum.take(rules, index)
+
+        address_diagnostics(rule) ++
+          option_diagnostics(rule) ++
+          unsafe_method_diagnostics(rule) ++
+          ident_reference_diagnostics(rule, maps) ++
+          shadow_diagnostics(rule, previous)
+      end)
+
+    parse_diagnostics ++ rule_diagnostics
+  end
+
+  defp parser_diagnostics(entries) do
+    Enum.flat_map(entries, fn
+      %{type: :error, message: message, span: span} -> [diagnostic(span, @error, message)]
+      _ -> []
+    end)
+  end
+
+  defp address_diagnostics(%{connection_type: "local"}), do: []
+
+  defp address_diagnostics(%{address: address, netmask: netmask, span: span}) do
+    cond do
+      is_nil(address) ->
+        [diagnostic(span, @error, "host rule is missing an address")]
+
+      address in @address_keywords and netmask != nil ->
+        [
+          diagnostic(
+            span,
+            @error,
+            "netmask cannot be used with address keyword #{inspect(address)}"
+          )
+        ]
+
+      address in @address_keywords ->
+        []
+
+      netmask != nil ->
+        netmask_diagnostics(address, netmask, span)
+
+      true ->
+        cidr_diagnostics(address, span)
+    end
+  end
+
+  defp netmask_diagnostics(address, netmask, span) do
+    with {:ok, ip} <- parse_ip(address),
+         {:ok, mask} <- parse_ip(netmask),
+         true <- tuple_family(ip) == tuple_family(mask) do
+      []
+    else
+      {:error, :hostname} ->
+        [diagnostic(span, @error, "netmask cannot be used with hostname #{inspect(address)}")]
+
+      _ ->
+        [diagnostic(span, @error, "malformed IP address or netmask")]
+    end
+  end
+
+  defp cidr_diagnostics(address, span) do
+    case String.split(address, "/", parts: 2) do
+      [ip_text, prefix_text] ->
+        with {:ok, ip} <- parse_ip(ip_text),
+             {prefix, ""} <- Integer.parse(prefix_text),
+             true <- prefix >= 0 and prefix <= max_prefix(ip) do
+          []
+        else
+          _ -> [diagnostic(span, @error, "malformed CIDR address #{inspect(address)}")]
+        end
+
+      [ip_text] ->
+        case parse_ip(ip_text) do
+          {:ok, _ip} -> []
+          {:error, :hostname} -> []
+          _ -> [diagnostic(span, @error, "malformed IP address #{inspect(address)}")]
+        end
+
+      _ ->
+        [diagnostic(span, @error, "malformed CIDR address #{inspect(address)}")]
+    end
+  end
+
+  defp option_diagnostics(%{connection_type: "local", options: options, span: span}) do
+    if Map.has_key?(options, "clientcert") do
+      [diagnostic(span, @error, "clientcert is not valid on a local rule")]
+    else
+      []
+    end
+  end
+
+  defp option_diagnostics(%{auth_method: method, options: options, span: span}) do
+    if method != "ldap" and Enum.any?(Map.keys(options), &String.starts_with?(&1, "ldap")) do
+      [
+        diagnostic(
+          span,
+          @error,
+          "ldap options are only valid with the ldap authentication method"
+        )
+      ]
+    else
+      []
+    end
+  end
+
+  defp unsafe_method_diagnostics(%{connection_type: type, auth_method: method, span: span}) do
+    if type in @host_types and method in ["trust", "password"] do
+      [diagnostic(span, @warning, "#{method} authentication is used on a non-local rule")]
+    else
+      []
+    end
+  end
+
+  defp ident_reference_diagnostics(%{auth_method: "ident", options: options, span: span}, maps) do
+    case Map.get(options, "map") do
+      nil ->
+        []
+
+      map ->
+        if MapSet.member?(maps, map) do
+          []
+        else
+          [diagnostic(span, @error, "ident map #{inspect(map)} does not exist in pg_ident.conf")]
+        end
+    end
+  end
+
+  defp ident_reference_diagnostics(_rule, _maps), do: []
+
+  defp shadow_diagnostics(_rule, []), do: []
+
+  defp shadow_diagnostics(rule, previous) do
+    case Enum.find(previous, &superset?(&1, rule)) do
+      %{auth_method: "reject"} ->
+        [
+          diagnostic(
+            rule.span,
+            @warning,
+            "rule can never match because an earlier reject rule shadows it"
+          )
+        ]
+
+      _earlier ->
+        if Enum.any?(previous, &superset?(&1, rule)) do
+          [
+            diagnostic(
+              rule.span,
+              @warning,
+              "rule can never match because an earlier rule shadows it"
+            )
+          ]
+        else
+          []
+        end
+    end
+  end
+
+  defp superset?(earlier, later) do
+    type_superset?(earlier.connection_type, later.connection_type) and
+      list_superset?(earlier.databases, later.databases) and
+      list_superset?(earlier.users, later.users) and
+      address_superset?(earlier, later)
+  end
+
+  defp type_superset?(type, type), do: true
+  defp type_superset?("host", type), do: type in @host_types
+  defp type_superset?(_earlier, _later), do: false
+
+  defp list_superset?(earlier, later) do
+    "all" in earlier or Enum.all?(later, &(&1 in earlier))
+  end
+
+  defp address_superset?(%{connection_type: "local"}, %{connection_type: "local"}), do: true
+
+  defp address_superset?(%{address: "all", netmask: nil}, _later), do: true
+
+  defp address_superset?(%{address: earlier}, %{address: later})
+       when earlier in @address_keywords or later in @address_keywords,
+       do: earlier == later
+
+  defp address_superset?(earlier, later) do
+    case {network(earlier), network(later)} do
+      {{:ok, earlier_ip, earlier_prefix}, {:ok, later_ip, later_prefix}}
+      when earlier_prefix <= later_prefix ->
+        same_network?(earlier_ip, later_ip, earlier_prefix)
+
+      _ ->
+        earlier.address == later.address and earlier.netmask == later.netmask
+    end
+  end
+
+  defp network(%{address: address, netmask: nil}) do
+    case String.split(address, "/", parts: 2) do
+      [ip_text, prefix_text] ->
+        with {:ok, ip} <- parse_ip(ip_text), {prefix, ""} <- Integer.parse(prefix_text) do
+          {:ok, ip, prefix}
+        else
+          _ -> :error
+        end
+
+      _ ->
+        :error
+    end
+  end
+
+  defp network(%{address: address, netmask: netmask}) do
+    with {:ok, ip} <- parse_ip(address),
+         {:ok, mask} <- parse_ip(netmask),
+         {:ok, prefix} <- prefix_from_netmask(mask) do
+      {:ok, ip, prefix}
+    else
+      _ -> :error
+    end
+  end
+
+  defp same_network?(left, right, prefix) do
+    mask_match?(left, right, prefix)
+  end
+
+  defp mask_match?({a, b, c, d}, {e, f, g, h}, prefix) do
+    left = <<a, b, c, d>>
+    right = <<e, f, g, h>>
+    prefix_match?(left, right, prefix)
+  end
+
+  defp mask_match?({a, b, c, d, e, f, g, h}, {i, j, k, l, m, n, o, p}, prefix) do
+    left = <<a::16, b::16, c::16, d::16, e::16, f::16, g::16, h::16>>
+    right = <<i::16, j::16, k::16, l::16, m::16, n::16, o::16, p::16>>
+    prefix_match?(left, right, prefix)
+  end
+
+  defp mask_match?(_, _, _), do: false
+
+  defp prefix_match?(left, right, prefix) do
+    bytes = div(prefix, 8)
+    remainder = rem(prefix, 8)
+    same_bytes = binary_part(left, 0, bytes) == binary_part(right, 0, bytes)
+
+    same_bytes and
+      (remainder == 0 or
+         (:binary.at(left, bytes) &&& 0xFF <<< (8 - remainder)) ==
+           (:binary.at(right, bytes) &&& 0xFF <<< (8 - remainder)))
+  end
+
+  defp parse_ip(text) do
+    case :inet.parse_address(String.to_charlist(text)) do
+      {:ok, ip} -> {:ok, ip}
+      {:error, :einval} -> {:error, :hostname}
+      other -> other
+    end
+  end
+
+  defp tuple_family({a, _b, _c, _d}) when is_integer(a), do: :ipv4
+  defp tuple_family({_a, _b, _c, _d, _e, _f, _g, _h}), do: :ipv6
+  defp max_prefix(ip) when tuple_size(ip) == 4, do: 32
+  defp max_prefix(_ip), do: 128
+
+  defp prefix_from_netmask(mask) do
+    width = if tuple_size(mask) == 4, do: 8, else: 16
+
+    bits =
+      mask
+      |> Tuple.to_list()
+      |> Enum.map_join("", &(Integer.to_string(&1, 2) |> String.pad_leading(width, "0")))
+
+    if Regex.match?(~r/^1*0*$/, bits) do
+      {:ok, String.length(String.trim_trailing(bits, "0"))}
+    else
+      :error
+    end
+  end
+
+  defp ident_maps(nil), do: MapSet.new()
+
+  defp ident_maps(text) do
+    {:ok, entries} = PgIdent.parse(text)
+
+    entries
+    |> Enum.filter(&(&1.type == :mapping))
+    |> Enum.map(& &1.map)
+    |> MapSet.new()
+  end
+
+  defp diagnostic(span, severity, message) do
+    %Diagnostic{
+      range: %Range{
+        start: %Position{line: span.line - 1, character: span.col - 1},
+        end: %Position{line: span.end_line - 1, character: span.end_col - 1}
+      },
+      severity: severity,
+      source: "postern",
+      message: message
+    }
+  end
+end
