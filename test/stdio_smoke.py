@@ -43,11 +43,17 @@ def receive(timeout=60):
             stderr = process.stderr.read().decode(errors="replace")
             raise EOFError("server closed stdout; stderr: " + stderr[:2000])
         headers += chunk
-    length = int(
-        [h for h in headers.decode().split("\r\n") if h.lower().startswith("content-length")][0]
-        .split(":")[1]
-    )
-    return json.loads(process.stdout.read(length))
+    lengths = [
+        h for h in headers.decode(errors="replace").split("\r\n") if h.lower().startswith("content-length")
+    ]
+    if not lengths:
+        rest = process.stdout.read1(400) if hasattr(process.stdout, "read1") else b""
+        raise ValueError("header block without Content-Length: %r; following bytes: %r" % (headers, rest))
+    body = process.stdout.read(int(lengths[0].split(":")[1]))
+    try:
+        return json.loads(body)
+    except ValueError:
+        raise ValueError("body is not JSON; headers %r body %r" % (headers, body[:400]))
 
 
 def receive_response():
