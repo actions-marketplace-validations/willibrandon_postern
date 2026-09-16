@@ -11,8 +11,8 @@ This file records implementation progress.
 | 2. Catalogs / `postgresql.conf` diagnostics | Complete | Generated pg13–pg18 catalogs from `pg_settings`; added catalog loading, version selection, Jaro suggestions, type/range/enum/unit checks, duplicate hints, removed-setting warnings, and restart information. |
 | 3. `pg_hba.conf` / `pg_ident.conf` diagnostics | Complete | Added CIDR/netmask validation, method-option checks, unsafe-method warnings, shadow/reject detection, and ident-map reference/unused-map diagnostics. |
 | 4. Hover / completion | Complete | Added catalog-backed hover, PostgreSQL setting/value completion, HBA keyword completion, and LSP request tests. |
-| 5. Live oracle | In progress | Read `postgrex` source; add supervised connection and live catalog/config queries. |
-| 6. CLI / packaging | Not started | Add `postern check`, JSON output, Burrito targets, and CI. |
+| 5. Live oracle | Complete | Added supervised reconnecting Postgrex snapshots, live file-setting diagnostics, inlay hints and code actions with offline fallback. |
+| 6. CLI / packaging | In progress | Added `postern check`, plain/JSON output, Burrito targets and CI; release build remains to verify. |
 | 7. Editor smoke tests | Not started | Add Neovim and Helix scripts; document Zed and VS Code. |
 
 ## Checks
@@ -27,12 +27,13 @@ This file records implementation progress.
 - `mix compile --warnings-as-errors` passes after the current edits.
 - ExUnit is configured for normal parallel scheduling; no global `max_cases: 1`
   workaround is used. LSP tests use unique supervised-process names.
-- Current gates pass: 52 parallel ExUnit tests, `mix compile
+- Current gates pass: 55 parallel ExUnit tests, `mix compile
   --warnings-as-errors`, `mix credo --strict`, and `mix format --check-formatted`.
 
 ## Current work item
 
-Next: add live command execution and editor smoke tests.
+The native Linux and macOS Burrito targets built. The Windows target needs
+7-Zip on the build host. Then add editor smoke tests.
 
 The final check must cover the requirements in `docs/original-brief.md` with
 source, tests, fixtures or command output.

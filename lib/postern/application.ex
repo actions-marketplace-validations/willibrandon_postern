@@ -7,6 +7,10 @@ defmodule Postern.Application do
   def start(_type, _args) do
     env = if Code.ensure_loaded?(Mix), do: Mix.env(), else: :prod
 
+    if System.argv() != [] and hd(System.argv()) == "check" do
+      System.halt(Postern.CLI.run(System.argv()))
+    end
+
     children =
       if env == :test do
         []

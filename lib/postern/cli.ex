@@ -1,0 +1,121 @@
+defmodule Postern.CLI do
+  @moduledoc """
+  Command-line checks for PostgreSQL configuration files.
+  """
+
+  alias Postern.Diagnostics
+
+  @doc "Runs the command-line interface and returns an exit code."
+  @spec run([String.t()]) :: non_neg_integer()
+  def run(["check" | args]) do
+    {options, files, invalid} = OptionParser.parse(args, switches: [json: :boolean])
+
+    cond do
+      invalid != [] ->
+        print_error("invalid options: #{inspect(invalid)}")
+        2
+
+      files == [] ->
+        print_error("usage: postern check [--json] FILE...")
+        2
+
+      true ->
+        results = Enum.map(files, &check_file/1)
+        print_results(results, options[:json] == true)
+
+        if Enum.any?(results, &has_errors?/1), do: 1, else: 0
+    end
+  end
+
+  def run(_args) do
+    print_error("usage: postern check [--json] FILE...")
+    2
+  end
+
+  defp check_file(file) do
+    path = Path.expand(file)
+
+    case File.read(path) do
+      {:ok, text} ->
+        uri = "file://" <> path
+        options = sibling_options(path)
+        %{file: file, diagnostics: Diagnostics.for_document(uri, text, options)}
+
+      {:error, reason} ->
+        %{file: file, diagnostics: [], error: "#{file}: #{:file.format_error(reason)}"}
+    end
+  end
+
+  defp sibling_options(path) do
+    dir = Path.dirname(path)
+    options = %{}
+
+    case File.read(Path.join(dir, "pg_hba.conf")) do
+      {:ok, text} -> Map.put(options, :pg_hba_text, text)
+      _ -> options
+    end
+    |> then(fn options ->
+      case File.read(Path.join(dir, "pg_ident.conf")) do
+        {:ok, text} -> Map.put(options, :pg_ident_text, text)
+        _ -> options
+      end
+    end)
+  end
+
+  defp print_results(results, true) do
+    json =
+      Enum.map(results, fn result ->
+        %{
+          "file" => result.file,
+          "error" => Map.get(result, :error),
+          "diagnostics" => Enum.map(result.diagnostics, &diagnostic_json/1)
+        }
+      end)
+
+    IO.puts(Jason.encode!(json, pretty: true))
+  end
+
+  defp print_results(results, false) do
+    Enum.each(results, fn result ->
+      if result[:error], do: print_error(result.error)
+
+      Enum.each(result.diagnostics, fn diagnostic ->
+        range = diagnostic.range
+        severity = severity_name(diagnostic.severity)
+
+        IO.puts(
+          "#{result.file}:#{range.start.line + 1}:#{range.start.character + 1}: #{severity}: #{diagnostic.message}"
+        )
+      end)
+    end)
+  end
+
+  defp diagnostic_json(diagnostic) do
+    %{
+      "severity" => diagnostic.severity,
+      "message" => diagnostic.message,
+      "source" => diagnostic.source,
+      "range" => %{
+        "start" => %{
+          "line" => diagnostic.range.start.line,
+          "character" => diagnostic.range.start.character
+        },
+        "end" => %{
+          "line" => diagnostic.range.end.line,
+          "character" => diagnostic.range.end.character
+        }
+      }
+    }
+  end
+
+  defp has_errors?(%{error: _}), do: true
+  defp has_errors?(%{diagnostics: diagnostics}), do: Enum.any?(diagnostics, &(&1.severity == 1))
+
+  defp severity_name(1), do: "error"
+  defp severity_name(2), do: "warning"
+  defp severity_name(3), do: "info"
+  defp severity_name(4), do: "hint"
+  defp severity_name(_), do: "diagnostic"
+
+  defp print_error(message), do: IO.puts(:stderr, message)
+end
