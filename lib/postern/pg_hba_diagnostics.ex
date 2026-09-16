@@ -17,6 +17,7 @@ defmodule Postern.PgHbaDiagnostics do
 
   @error 1
   @warning 2
+  @hint 4
 
   @host_types ~w(host hostssl hostnossl hostgssenc hostnogssenc)
   @address_keywords ~w(all samehost samenet)
@@ -143,12 +144,26 @@ defmodule Postern.PgHbaDiagnostics do
     end
   end
 
-  defp unsafe_method_diagnostics(%{connection_type: type, auth_method: method, span: span}) do
-    if type in @host_types and method in ["trust", "password"] do
-      [diagnostic(span, @warning, "#{method} authentication is used on a non-local rule")]
+  # A deliberate choice on many development setups, so this is advice rather
+  # than a problem, and loopback rules are left alone entirely.
+  defp unsafe_method_diagnostics(%{
+         connection_type: type,
+         auth_method: method,
+         address: address,
+         span: span
+       }) do
+    if type in @host_types and method in ["trust", "password"] and not loopback?(address) do
+      [diagnostic(span, @hint, "#{method} authentication is used on a non-local rule")]
     else
       []
     end
+  end
+
+  defp loopback?(nil), do: true
+
+  defp loopback?(address) do
+    host = address |> String.split("/") |> hd()
+    host in ~w(127.0.0.1 ::1 localhost samehost) or String.starts_with?(host, "127.")
   end
 
   defp ident_reference_diagnostics(%{auth_method: "ident", options: options, span: span}, maps) do

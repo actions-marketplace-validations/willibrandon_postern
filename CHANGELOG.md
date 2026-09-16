@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+- `trust` or `password` on a non-local `pg_hba.conf` rule is now a hint rather than a warning, so
+  it stays out of the Problems panel, and loopback and `samehost` rules are not reported at all.
+
 ## [0.1.2] - 2026-09-16
 
 - Settings whose changes need a server restart are no longer reported as problems. That is a

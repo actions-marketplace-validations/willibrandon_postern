@@ -40,7 +40,18 @@ defmodule Postern.PgHbaDiagnosticsTest do
         "host all all 10.0.0.0/8 trust\nhost all all 10.0.0.0/8 password\n"
       )
 
-    assert Enum.count(diagnostics, &String.contains?(&1.message, "non-local rule")) == 2
+    advice = Enum.filter(diagnostics, &String.contains?(&1.message, "non-local rule"))
+    assert length(advice) == 2
+    assert Enum.all?(advice, &(&1.severity == 4))
+  end
+
+  test "trust on loopback or samehost rules is not reported" do
+    diagnostics =
+      Postern.PgHbaDiagnostics.diagnostics(
+        "host all all 127.0.0.1/32 trust\nhost all all ::1/128 trust\nhost all all samehost trust\n"
+      )
+
+    refute Enum.any?(diagnostics, &String.contains?(&1.message, "non-local rule"))
   end
 
   test "reject rules shadow every later matching rule" do
