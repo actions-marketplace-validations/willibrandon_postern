@@ -21,9 +21,11 @@ the end of each numbered phase and before starting the next one.
 - Elixir 1.18.3 / OTP 27.3.4.1 and Mix 1.18.3 are installed.
 - Dependencies are locked in `mix.lock`; dependency source was inspected before
   using GenLSP and NimbleParsec APIs.
-- The project pins `gen_lsp 0.9.x` because ElixirLS 0.31.x vendors the
-  compatible `schematic/0` protocol; `gen_lsp 0.11.x` caused a
-  `MessageType.schematic/0` crash through module redefinition.
+- The project uses `gen_lsp 0.9.x`; the ElixirLS extension was removed from
+  the remote extension set because it vendors the same `GenLSP.*` module names
+  and conflicts with this project while compiling dependencies. The
+  `mjmcloug.vscode-elixir` extension remains available for syntax and
+  ElixirSense completion.
 - PostgreSQL fixtures have been copied from a PostgreSQL installation into
   `test/fixtures/`.
 - Fixtures copied from the container are under `test/fixtures/`.
@@ -39,10 +41,8 @@ Begin Phase 2 by adding the catalog generator and producing
 `priv/catalog/pg13.json` through `priv/catalog/pg18.json` from PostgreSQL
 servers. Then add catalog loading and offline `postgresql.conf` diagnostics.
 
-After the ElixirLS dependency fix, reload the VS Code window so the previously
-crashed language-server process is replaced. The retained pre-fix crash log is
-not evidence of a post-fix failure; a direct ElixirLS 0.31.1 launch now boots
-without the `MessageType.schematic/0` exception.
+The ElixirLS extension is intentionally not used for this project because its
+vendored `GenLSP.*` modules conflict with Postern's `gen_lsp` dependency.
 
 ## Required evidence before completion
 
