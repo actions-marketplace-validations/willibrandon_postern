@@ -4,9 +4,6 @@
 
 - Settings that need a restart to change are no longer listed as problems; the hover says so
   instead.
-- Published as platform packages only. The universal package matched every platform and could be
-  picked up before the platform package for a release finished validating, leaving an install
-  without a server binary.
 
 ## [0.1.1] - 2026-09-16
 

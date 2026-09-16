@@ -22,10 +22,10 @@ Checks work offline from catalogs of `pg_settings` for PostgreSQL 13 through 18.
 
 ## Requirements
 
-The extension bundles the Postern language server and is published for Linux (x64, arm64, Alpine),
-macOS (Intel, Apple silicon) and Windows (x64). To use another build of the server, put `postern` on
-your `PATH` or set `postern.path`; binaries are on the
-[releases page](https://github.com/willibrandon/postern/releases).
+The extension bundles the Postern language server for Linux (x64, arm64, Alpine), macOS (Intel,
+Apple silicon) and Windows (x64). On other platforms, download a binary from the
+[releases page](https://github.com/willibrandon/postern/releases), put it on your `PATH` as
+`postern`, or set `postern.path`.
 
 The language server does not run in the browser. On vscode.dev and github.dev the extension provides
 highlighting only.
