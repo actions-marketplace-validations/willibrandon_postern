@@ -85,4 +85,15 @@ defmodule Postern.FeaturesTest do
     assert Enum.any?(database_items, &(&1.label == "billing"))
     assert Enum.any?(role_items, &(&1.label == "app_user"))
   end
+
+  test "the trust hint carries a quick fix that turns the hint off" do
+    [hint] = Postern.PgHbaDiagnostics.diagnostics("host all all all trust\n")
+    assert hint.code == "trust"
+
+    assert [%{title: title, command: %{command: "postern.disableTrustHints"}}] =
+             Features.code_actions([hint])
+
+    assert title =~ "trust"
+    assert Features.code_actions([%{hint | code: nil}]) == []
+  end
 end

@@ -29,11 +29,12 @@ defmodule Postern.PgHbaDiagnostics do
   corresponding `pg_ident.conf` document is open.
   """
   @spec diagnostics(String.t(), String.t() | nil) :: [Diagnostic.t()]
-  def diagnostics(text, ident_text \\ nil) when is_binary(text) do
+  def diagnostics(text, ident_text \\ nil, options \\ %{}) when is_binary(text) do
     {:ok, entries} = PgHba.parse(text)
     parse_diagnostics = parser_diagnostics(entries)
     rules = Enum.filter(entries, &(&1.type == :rule))
     maps = ident_maps(ident_text)
+    report_trust = Map.get(options, :report_trust, true)
 
     rule_diagnostics =
       rules
@@ -43,7 +44,7 @@ defmodule Postern.PgHbaDiagnostics do
 
         address_diagnostics(rule) ++
           option_diagnostics(rule) ++
-          unsafe_method_diagnostics(rule) ++
+          unsafe_method_diagnostics(rule, report_trust) ++
           ident_reference_diagnostics(rule, maps) ++
           shadow_diagnostics(rule, previous)
       end)
@@ -146,14 +147,19 @@ defmodule Postern.PgHbaDiagnostics do
 
   # A deliberate choice on many development setups, so this is advice rather
   # than a problem, and loopback rules are left alone entirely.
-  defp unsafe_method_diagnostics(%{
-         connection_type: type,
-         auth_method: method,
-         address: address,
-         span: span
-       }) do
+  defp unsafe_method_diagnostics(_rule, false), do: []
+
+  defp unsafe_method_diagnostics(
+         %{connection_type: type, auth_method: method, address: address, span: span},
+         _report
+       ) do
     if type in @host_types and method in ["trust", "password"] and not loopback?(address) do
-      [diagnostic(span, @hint, "#{method} authentication is used on a non-local rule")]
+      [
+        %{
+          diagnostic(span, @hint, "#{method} authentication is used on a non-local rule")
+          | code: "trust"
+        }
+      ]
     else
       []
     end
@@ -212,9 +218,17 @@ defmodule Postern.PgHbaDiagnostics do
 
   defp superset?(earlier, later) do
     type_superset?(earlier.connection_type, later.connection_type) and
-      list_superset?(earlier.databases, later.databases) and
+      database_superset?(earlier.databases, later.databases) and
       list_superset?(earlier.users, later.users) and
       address_superset?(earlier, later)
+  end
+
+  # "all" matches every database but never a replication connection, which
+  # only the "replication" keyword covers.
+  defp database_superset?(earlier, later) do
+    Enum.all?(later, fn database ->
+      database in earlier or (database != "replication" and "all" in earlier)
+    end)
   end
 
   defp type_superset?(type, type), do: true

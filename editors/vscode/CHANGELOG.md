@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+- Trust on a non-local `pg_hba.conf` rule is a hint instead of a warning, and a new
+  `postern.hba.reportTrust` setting, also reachable as a quick fix on the hint, turns it off.
+- `all` no longer counts as shadowing `replication` rules.
+
 ## [0.1.2] - 2026-09-16
 
 - Settings that need a restart to change are no longer listed as problems; the hover says so

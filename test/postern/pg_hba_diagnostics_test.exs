@@ -45,6 +45,22 @@ defmodule Postern.PgHbaDiagnosticsTest do
     assert Enum.all?(advice, &(&1.severity == 4))
   end
 
+  test "all does not shadow replication rules" do
+    diagnostics =
+      Postern.PgHbaDiagnostics.diagnostics(
+        "local all all trust\nlocal replication all trust\nhost all all 0.0.0.0/0 trust\nhost replication all 10.0.0.0/8 trust\n"
+      )
+
+    refute Enum.any?(diagnostics, &String.contains?(&1.message, "shadows it"))
+  end
+
+  test "trust hints can be turned off" do
+    diagnostics =
+      Postern.PgHbaDiagnostics.diagnostics("host all all all trust\n", nil, %{report_trust: false})
+
+    refute Enum.any?(diagnostics, &String.contains?(&1.message, "non-local rule"))
+  end
+
   test "trust on loopback or samehost rules is not reported" do
     diagnostics =
       Postern.PgHbaDiagnostics.diagnostics(

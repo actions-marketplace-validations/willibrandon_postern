@@ -16,6 +16,7 @@ export function activate(context: vscode.ExtensionContext): void {
   };
   context.subscriptions.push(
     vscode.commands.registerCommand("postern.restartServer", unavailable),
+    vscode.commands.registerCommand("postern.disableTrustHints", unavailable),
     vscode.commands.registerCommand("postern.showOutput", (): void => {
       output.show(true);
     }),

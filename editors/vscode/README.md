@@ -32,12 +32,13 @@ highlighting only.
 
 ## Settings
 
-| Setting                    | Default | Description                                                                                                             |
-| -------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `postern.path`             | `""`    | Path to the `postern` executable. Empty uses the bundled binary, then `postern` on the `PATH`.                          |
-| `postern.pg`               | newest  | PostgreSQL major version, 13 to 18, for offline checks. A `# postern: pg=16` comment at the top of a file overrides it. |
-| `postern.connectionString` | `""`    | `postgres://` URL of a server to check the open files against.                                                          |
-| `postern.trace.server`     | `off`   | Log the traffic between VS Code and the language server.                                                                |
+| Setting                    | Default | Description                                                                                                                    |
+| -------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `postern.path`             | `""`    | Path to the `postern` executable. Empty uses the bundled binary, then `postern` on the `PATH`.                                 |
+| `postern.pg`               | newest  | PostgreSQL major version, 13 to 18, for offline checks. A `# postern: pg=16` comment at the top of a file overrides it.        |
+| `postern.connectionString` | `""`    | `postgres://` URL of a server to check the open files against.                                                                 |
+| `postern.hba.reportTrust`  | `true`  | Hint on `pg_hba.conf` rules that use `trust` or `password` on a non-local address. Loopback and `samehost` are never reported. |
+| `postern.trace.server`     | `off`   | Log the traffic between VS Code and the language server.                                                                       |
 
 In untrusted workspaces the executable path and connection string are read from user settings only.
 
@@ -53,6 +54,7 @@ informational diagnostic says so.
 
 - Postern: Restart Language Server
 - Postern: Show Language Server Output
+- Postern: Stop Reporting Trust on Non-local Rules, also offered as a quick fix on the hint
 
 ## Install
 

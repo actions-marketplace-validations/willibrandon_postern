@@ -176,12 +176,12 @@ defmodule Postern.Server do
   end
 
   def handle_request(%TextDocumentCodeAction{params: params}, lsp) do
-    reply =
+    live =
       live_feature_result(lsp, params.text_document.uri, fn uri, _text, snapshot ->
         LiveFeatures.code_actions(uri, snapshot)
       end)
 
-    {:reply, reply, lsp}
+    {:reply, Features.code_actions(params.context.diagnostics || []) ++ live, lsp}
   end
 
   def handle_request(%WorkspaceExecuteCommand{params: params}, lsp) do

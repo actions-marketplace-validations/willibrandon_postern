@@ -35,7 +35,8 @@ defmodule Postern.Diagnostics do
         offline =
           Postern.PgHbaDiagnostics.diagnostics(
             text,
-            option(initialization_options, :pg_ident_text)
+            option(initialization_options, :pg_ident_text),
+            %{report_trust: option(initialization_options, :reportTrust) != false}
           )
 
         offline ++

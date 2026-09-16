@@ -4,6 +4,10 @@
 
 - `trust` or `password` on a non-local `pg_hba.conf` rule is now a hint rather than a warning, so
   it stays out of the Problems panel, and loopback and `samehost` rules are not reported at all.
+  The `reportTrust` initialization option turns the hint off, and the hint carries a quick fix
+  that does so in VS Code.
+- The shadowing check no longer treats `all` as covering `replication`, since PostgreSQL's `all`
+  keyword never matches a replication connection.
 
 ## [0.1.2] - 2026-09-16
 

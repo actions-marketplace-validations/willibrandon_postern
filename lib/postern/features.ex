@@ -6,8 +6,11 @@ defmodule Postern.Features do
   completion keywords are protocol-level grammar terms, not setting metadata.
   """
 
+  alias GenLSP.Enumerations.CodeActionKind
   alias GenLSP.Enumerations.CompletionItemKind
   alias GenLSP.Enumerations.MarkupKind
+  alias GenLSP.Structures.CodeAction
+  alias GenLSP.Structures.Command
   alias GenLSP.Structures.CompletionItem
   alias GenLSP.Structures.CompletionList
   alias GenLSP.Structures.Hover
@@ -32,6 +35,30 @@ defmodule Postern.Features do
       _ -> nil
     end
   end
+
+  @doc "Quick fixes for diagnostics in the request context that carry one."
+  @spec code_actions([map()]) :: [CodeAction.t()]
+  def code_actions(diagnostics) do
+    if Enum.any?(diagnostics, &trust_diagnostic?/1) do
+      [
+        %CodeAction{
+          title: "Stop reporting trust on non-local rules",
+          kind: CodeActionKind.quick_fix(),
+          diagnostics: Enum.filter(diagnostics, &trust_diagnostic?/1),
+          command: %Command{
+            title: "Stop reporting trust on non-local rules",
+            command: "postern.disableTrustHints",
+            arguments: []
+          }
+        }
+      ]
+    else
+      []
+    end
+  end
+
+  defp trust_diagnostic?(%{source: "postern", code: "trust"}), do: true
+  defp trust_diagnostic?(_diagnostic), do: false
 
   @doc "Returns completion items for a document position."
   @spec completion(String.t(), String.t(), Position.t(), map() | keyword()) :: CompletionList.t()

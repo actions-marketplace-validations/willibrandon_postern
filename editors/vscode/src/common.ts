@@ -12,6 +12,7 @@ export const documentSelector: DocumentSelector = [
 export interface InitializationOptions {
   pg?: number;
   connectionString?: string;
+  reportTrust?: boolean;
 }
 
 export function initializationOptions(): InitializationOptions {
@@ -21,6 +22,7 @@ export function initializationOptions(): InitializationOptions {
   if (typeof pg === "number" && Number.isInteger(pg)) options.pg = pg;
   const connectionString = config.get<string>("connectionString", "").trim();
   if (connectionString !== "") options.connectionString = connectionString;
+  if (!config.get<boolean>("hba.reportTrust", true)) options.reportTrust = false;
   return options;
 }
 
@@ -37,6 +39,7 @@ export function affectsServer(event: vscode.ConfigurationChangeEvent): boolean {
   return (
     event.affectsConfiguration("postern.path") ||
     event.affectsConfiguration("postern.pg") ||
-    event.affectsConfiguration("postern.connectionString")
+    event.affectsConfiguration("postern.connectionString") ||
+    event.affectsConfiguration("postern.hba.reportTrust")
   );
 }
