@@ -120,7 +120,7 @@ jobs:
         with:
           name: binaries
           path: artifacts/binaries
-      - name: Package one VSIX per platform plus a universal one
+      - name: Package one VSIX per platform
         env:
           VERSION: ${{ needs.verify.outputs.version }}
         run: |
@@ -142,7 +142,8 @@ jobs:
           package darwin-arm64 "postern-$VERSION-darwin-arm64" postern
           package win32-x64 "postern-$VERSION-win32-x64.exe" postern.exe
           rm -rf server
-          npx vsce package --no-dependencies --out "$out/postern-$VERSION.vsix"
+          # No universal package: it matches every platform and the Marketplace validates it
+          # first, so an update inside that window would land a package with no binary.
           ls -la "$out"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

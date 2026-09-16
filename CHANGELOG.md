@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.1.2] - 2026-09-16
 
 - Settings whose changes need a server restart are no longer reported as problems. That is a
   property of the setting, not a fault in the file, so it now appears in the hover instead. A
