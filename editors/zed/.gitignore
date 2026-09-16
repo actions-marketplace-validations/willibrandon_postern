@@ -1,1 +1,5 @@
 target/
+
+# What Zed writes into the directory when it builds the dev extension.
+extension.wasm
+grammars/
