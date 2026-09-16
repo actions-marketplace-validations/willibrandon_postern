@@ -5,14 +5,19 @@ defmodule Postern.Application do
 
   @impl true
   def start(_type, _args) do
-    Logger.configure(level: :warning)
     env = if Code.ensure_loaded?(Mix), do: Mix.env(), else: :prod
 
     args = runtime_args()
 
-    case Enum.find_index(args, &(&1 == "check")) do
-      nil -> :ok
-      index -> System.halt(Postern.CLI.run(Enum.drop(args, index)))
+    cond do
+      Enum.any?(args, &(&1 in Postern.CLI.info_flags())) ->
+        System.halt(Postern.CLI.run(args))
+
+      index = Enum.find_index(args, &(&1 == "check")) ->
+        System.halt(Postern.CLI.run(Enum.drop(args, index)))
+
+      true ->
+        :ok
     end
 
     children =

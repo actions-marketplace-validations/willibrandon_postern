@@ -59,6 +59,7 @@ language-servers = ["postern"]
 ```sh
 postern check postgresql.conf pg_hba.conf
 postern check --json pg_hba.conf
+postern --help
 ```
 
 `check` exits 1 when any file has an error. Files are recognised by name, so pass the real

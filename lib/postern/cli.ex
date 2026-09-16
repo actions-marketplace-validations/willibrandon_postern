@@ -5,8 +5,36 @@ defmodule Postern.CLI do
 
   alias Postern.Diagnostics
 
+  @help_flags ~w(--help -h help)
+  @version_flags ~w(--version -v version)
+
+  @usage """
+  Usage:
+    postern                          start the language server on stdio
+    postern check [--json] FILE...   report diagnostics and exit 1 on errors
+    postern --version
+    postern --help
+
+  Files are recognised by name: postgresql.conf, postgresql.auto.conf,
+  pg_hba.conf and pg_ident.conf.
+  """
+
+  @doc "Arguments that print information and exit instead of starting the server."
+  @spec info_flags() :: [String.t()]
+  def info_flags, do: @help_flags ++ @version_flags
+
   @doc "Runs the command-line interface and returns an exit code."
   @spec run([String.t()]) :: non_neg_integer()
+  def run([flag | _]) when flag in @help_flags do
+    IO.write(@usage)
+    0
+  end
+
+  def run([flag | _]) when flag in @version_flags do
+    IO.puts("postern " <> to_string(Application.spec(:postern, :vsn)))
+    0
+  end
+
   def run(["check" | args]) do
     {options, files, invalid} = OptionParser.parse(args, switches: [json: :boolean])
 
@@ -16,7 +44,7 @@ defmodule Postern.CLI do
         2
 
       files == [] ->
-        print_error("usage: postern check [--json] FILE...")
+        IO.write(:stderr, @usage)
         2
 
       true ->
@@ -28,7 +56,7 @@ defmodule Postern.CLI do
   end
 
   def run(_args) do
-    print_error("usage: postern check [--json] FILE...")
+    IO.write(:stderr, @usage)
     2
   end
 

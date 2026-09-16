@@ -7,6 +7,17 @@ defmodule Postern.CLITest do
 
   @fixtures Path.expand("../fixtures", __DIR__)
 
+  test "--help prints usage and returns zero" do
+    output = capture_io(fn -> assert CLI.run(["--help"]) == 0 end)
+    assert output =~ "Usage:"
+    assert output =~ "postern check"
+  end
+
+  test "--version prints the version and returns zero" do
+    output = capture_io(fn -> assert CLI.run(["--version"]) == 0 end)
+    assert output =~ ~r/^postern \d+\.\d+\.\d+/
+  end
+
   test "check returns zero for a valid PostgreSQL configuration" do
     output =
       capture_io(fn ->
