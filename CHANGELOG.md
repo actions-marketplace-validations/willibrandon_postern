@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.4] - 2026-09-16
+
+- The VS Code extension is published as platform packages only. The universal package matched
+  every platform and the Marketplace validated it before the platform packages, so an update in
+  that window installed a package with no server binary.
+
 ## [0.1.3] - 2026-09-16
 
 - `trust` or `password` on a non-local `pg_hba.conf` rule is now a hint rather than a warning, so

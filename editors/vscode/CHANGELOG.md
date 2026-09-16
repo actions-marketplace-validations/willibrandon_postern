@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.4] - 2026-09-16
+
+- Published as platform packages only. The universal package could be installed in the minutes
+  before the platform package for a new version finished validating, leaving no server binary.
+
 ## [0.1.3] - 2026-09-16
 
 - Trust on a non-local `pg_hba.conf` rule is a hint instead of a warning, and a new
