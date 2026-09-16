@@ -29,7 +29,7 @@ defmodule Postern.DocumentStore do
   """
   @spec all(GenLSP.LSP.t()) :: %{uri() => document()}
   def all(lsp) do
-    Map.get(lsp.assigns, :documents, %{})
+    Map.get(GenLSP.LSP.assigns(lsp), :documents, %{})
   end
 
   @doc """
@@ -55,8 +55,10 @@ defmodule Postern.DocumentStore do
       kind: kind
     }
 
-    documents = all(lsp)
-    GenLSP.LSP.assign(lsp, documents: Map.put(documents, uri, doc))
+    GenLSP.LSP.assign(lsp, fn current ->
+      documents = Map.get(current, :documents, %{})
+      [documents: Map.put(documents, uri, doc)]
+    end)
   end
 
   @doc """
@@ -74,8 +76,10 @@ defmodule Postern.DocumentStore do
 
         doc = %{existing | text: text, version: version, kind: kind}
 
-        documents = all(lsp)
-        GenLSP.LSP.assign(lsp, documents: Map.put(documents, uri, doc))
+        GenLSP.LSP.assign(lsp, fn current ->
+          documents = Map.get(current, :documents, %{})
+          [documents: Map.put(documents, uri, doc)]
+        end)
     end
   end
 
@@ -84,7 +88,9 @@ defmodule Postern.DocumentStore do
   """
   @spec delete(GenLSP.LSP.t(), uri()) :: GenLSP.LSP.t()
   def delete(lsp, uri) do
-    documents = all(lsp)
-    GenLSP.LSP.assign(lsp, documents: Map.delete(documents, uri))
+    GenLSP.LSP.assign(lsp, fn current ->
+      documents = Map.get(current, :documents, %{})
+      [documents: Map.delete(documents, uri)]
+    end)
   end
 end

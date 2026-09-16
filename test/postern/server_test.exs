@@ -358,6 +358,6 @@ defmodule Postern.ServerTest do
   end
 
   defp server_assigns(server) do
-    :sys.get_state(server.lsp).assigns
+    GenLSP.Assigns.get(server.assigns)
   end
 end

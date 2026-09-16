@@ -57,7 +57,8 @@ defmodule Postern.Server do
   def start_link(opts) do
     {args, gen_opts} = Keyword.split(opts, [:test_mode])
 
-    gen_opts = Keyword.take(gen_opts, [:buffer, :name])
+    gen_opts =
+      Keyword.take(gen_opts, [:buffer, :assigns, :task_supervisor, :name, :sync_notifications])
 
     GenLSP.start_link(__MODULE__, args, gen_opts)
   end
@@ -88,7 +89,7 @@ defmodule Postern.Server do
     live_oracle =
       case LiveOracle.connection_options(initialization_options || %{}) do
         nil ->
-          lsp.assigns.live_oracle
+          current_assigns(lsp).live_oracle
 
         options ->
           {:ok, oracle} = LiveOracle.start_link(options)
@@ -150,7 +151,7 @@ defmodule Postern.Server do
             params.text_document.uri,
             text,
             params.position,
-            Map.get(lsp.assigns, :initialization_options, %{})
+            Map.get(current_assigns(lsp), :initialization_options, %{})
           )
 
         nil ->
@@ -188,7 +189,7 @@ defmodule Postern.Server do
         nil -> arguments
       end
 
-    reply = LiveOracle.execute(lsp.assigns.live_oracle, params.command, arguments)
+    reply = LiveOracle.execute(current_assigns(lsp).live_oracle, params.command, arguments)
     {:reply, reply, lsp}
   end
 
@@ -198,8 +199,8 @@ defmodule Postern.Server do
   end
 
   def handle_notification(%ExitNotification{}, lsp) do
-    exit_code = Map.get(lsp.assigns, :exit_code, 0)
-    test_mode = Map.get(lsp.assigns, :test_mode, false)
+    exit_code = Map.get(current_assigns(lsp), :exit_code, 0)
+    test_mode = Map.get(current_assigns(lsp), :test_mode, false)
     test_env = Code.ensure_loaded?(Mix) and Mix.env() == :test
 
     unless test_mode or test_env do
@@ -250,12 +251,12 @@ defmodule Postern.Server do
   end
 
   defp publish_diagnostics(lsp, uri, text, version) do
-    initialization_options = Map.get(lsp.assigns, :initialization_options, %{})
+    initialization_options = Map.get(current_assigns(lsp), :initialization_options, %{})
 
     base_options =
       if is_nil(initialization_options), do: %{}, else: Map.new(initialization_options)
 
-    live_oracle = Map.get(lsp.assigns, :live_oracle)
+    live_oracle = Map.get(current_assigns(lsp), :live_oracle)
     live_snapshot = if is_pid(live_oracle), do: LiveOracle.snapshot(live_oracle), else: nil
 
     options =
@@ -275,7 +276,7 @@ defmodule Postern.Server do
   defp live_feature_result(lsp, uri, callback) do
     case DocumentStore.get(lsp, uri) do
       %{text: text} ->
-        snapshot = LiveOracle.snapshot(lsp.assigns.live_oracle)
+        snapshot = LiveOracle.snapshot(current_assigns(lsp).live_oracle)
         callback.(uri, text, snapshot)
 
       nil ->
@@ -284,13 +285,15 @@ defmodule Postern.Server do
   end
 
   defp feature_options(lsp) do
-    initialization_options = Map.get(lsp.assigns, :initialization_options, %{})
+    initialization_options = Map.get(current_assigns(lsp), :initialization_options, %{})
 
     base_options =
       if is_nil(initialization_options), do: %{}, else: Map.new(initialization_options)
 
-    Map.put(base_options, :live_snapshot, LiveOracle.snapshot(lsp.assigns.live_oracle))
+    Map.put(base_options, :live_snapshot, LiveOracle.snapshot(current_assigns(lsp).live_oracle))
   end
+
+  defp current_assigns(lsp), do: GenLSP.LSP.assigns(lsp)
 
   defp document_options(lsp) do
     documents = DocumentStore.all(lsp)
