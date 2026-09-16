@@ -48,93 +48,11 @@ MIX_ENV=prod mix release
 # binaries at burrito_out/postern_linux_x86_64 etc. (linux-x86_64, macos-arm64, windows-x86_64)
 ```
 
-## Editor Setup
+## LSP
 
-Postern speaks LSP over stdio. Any client that supports `initialize`, `textDocument/didOpen|didChange|didClose` plus `hover`/`completion` works.
-
-### Neovim (nvim-lspconfig)
-
-```lua
-local lspconfig = require("lspconfig")
-local configs = require("lspconfig.configs")
-
-if not configs.postern then
-  configs.postern = {
-    default_config = {
-      cmd = { "postern" }, -- or "/path/to/burrito_out/postern_linux_x86_64"
-      filetypes = { "conf" },
-      root_dir = lspconfig.util.root_pattern("postgresql.conf", "pg_hba.conf", ".git"),
-      settings = {},
-      init_options = {
-        -- optional: target version 13..18, defaults to newest catalog
-        -- pg = 16,
-        -- optional: live connection
-        -- connectionString = "postgres://user:pass@localhost:5432/postgres"
-      },
-    },
-  }
-end
-
-lspconfig.postern.setup({})
-```
-
-Or headless smoke test:
-
-```sh
-nvim --headless -c "lua require('lspconfig').postern.setup{cmd={'postern'}}" -c "e test/fixtures/postgresql.conf" -c "sleep 500m" -c "qa!"
-```
-
-### Helix
-
-`languages.toml`:
-
-```toml
-[language-server.postern]
-command = "postern"
-
-[[language]]
-name = "ini"
-scope = "source.ini"
-file-types = ["conf"]
-roots = ["postgresql.conf", "pg_hba.conf"]
-language-servers = ["postern"]
-
-[[language]]
-name = "pg_hba"
-scope = "source.pg_hba"
-file-types = ["conf"]
-roots = ["pg_hba.conf"]
-language-servers = ["postern"]
-```
-
-### Zed
-
-Zed support is via the generic LSP client (owner will write the extension). Add to `settings.json`:
-
-```json
-{
-  "lsp": {
-    "postern": {
-      "binary": { "path": "postern", "arguments": [] }
-    }
-  },
-  "languages": {
-    "PostgreSQL Config": {
-      "language_servers": ["postern"]
-    }
-  }
-}
-```
-
-### VS Code
-
-The Expert extension can be used for Elixir syntax highlighting, hover
-documentation, completion, diagnostics, navigation and formatting. It handles
-`.ex` and `.exs` files; it is not the Postern LSP client for PostgreSQL
-configuration files.
-
-The future Postern VS Code client can independently launch `postern` over
-stdio for `postgresql.conf`, `pg_hba.conf`, and `pg_ident.conf`.
+Postern speaks LSP over stdio. Clients should launch the `postern` executable
+and support `initialize`, document synchronization, diagnostics, hover and
+completion as those capabilities become available.
 
 ## Configuration
 

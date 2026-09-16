@@ -9,8 +9,8 @@ the end of each numbered phase and before starting the next one.
 | --- | --- | --- |
 | 0. Skeleton | Complete | Commit `ef3ecb7`; `Postern.Server`, `Postern.DocumentStore`, `Postern.FileKind`, JSON-RPC tests. |
 | 1. Parsers | Complete | Three NimbleParsec-backed parser modules, fixture round trips, token spans, and exact parse-error diagnostics; committed after all gates passed. |
-| 2. Catalogs / `postgresql.conf` diagnostics | In progress | Generate catalogs from PostgreSQL 13–18 containers; do not hand-author setting metadata. |
-| 3. `pg_hba.conf` / `pg_ident.conf` diagnostics | Not started | Add CIDR, option, shadowing, and ident-map checks after Phase 2. |
+| 2. Catalogs / `postgresql.conf` diagnostics | Complete | Generated pg13–pg18 catalogs from `pg_settings`; added catalog loading, version selection, Jaro suggestions, type/range/enum/unit checks, duplicate hints, removed-setting warnings, and restart information. |
+| 3. `pg_hba.conf` / `pg_ident.conf` diagnostics | In progress | Add CIDR, option, shadowing, and ident-map checks. |
 | 4. Hover / completion | Not started | Add LSP requests and fixture-backed ExUnit tests. |
 | 5. Live oracle | Not started | Read `postgrex` source before implementing supervision and queries. |
 | 6. CLI / packaging | Not started | Add `postern check`, JSON output, Burrito targets, and CI. |
@@ -28,18 +28,18 @@ the end of each numbered phase and before starting the next one.
   diagnostics.
 - PostgreSQL fixtures have been copied from a PostgreSQL installation into
   `test/fixtures/`.
-- Fixtures copied from the container are under `test/fixtures/`.
+- `priv/catalog/pg13.json` through `priv/catalog/pg18.json` are generated
+  artifacts from the required `pg_settings` query.
 - `mix compile --warnings-as-errors` passes after the current edits.
 - ExUnit is configured for normal parallel scheduling; no global `max_cases: 1`
   workaround is used. LSP tests use unique supervised-process names.
-- Current gates pass: 29 parallel ExUnit tests, `mix compile
+- Current gates pass: 36 parallel ExUnit tests, `mix compile
   --warnings-as-errors`, `mix credo --strict`, and `mix format --check-formatted`.
 
 ## Current work item
 
-Begin Phase 2 by adding the catalog generator and producing
-`priv/catalog/pg13.json` through `priv/catalog/pg18.json` from PostgreSQL
-servers. Then add catalog loading and offline `postgresql.conf` diagnostics.
+Begin Phase 3 by adding offline `pg_hba.conf` and `pg_ident.conf` diagnostics
+for addresses, method options, rule reachability, and ident-map references.
 
 The ElixirLS extension is intentionally not used for this project because its
 vendored `GenLSP.*` modules conflict with Postern's `gen_lsp` dependency.

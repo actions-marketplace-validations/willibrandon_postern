@@ -155,7 +155,8 @@ defmodule Postern.Server do
   end
 
   defp publish_diagnostics(lsp, uri, text, version) do
-    diagnostics = Diagnostics.for_document(uri, text)
+    diagnostics =
+      Diagnostics.for_document(uri, text, Map.get(lsp.assigns, :initialization_options, %{}))
 
     GenLSP.notify(lsp, %TextDocumentPublishDiagnostics{
       params: %PublishDiagnosticsParams{uri: uri, version: version, diagnostics: diagnostics}
