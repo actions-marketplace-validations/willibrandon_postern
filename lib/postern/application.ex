@@ -1,5 +1,5 @@
 defmodule Postern.Application do
-  @moduledoc false
+  @moduledoc "Starts the Postern LSP application and its stdio transport."
 
   use Application
 
