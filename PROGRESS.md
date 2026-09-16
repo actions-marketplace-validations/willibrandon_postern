@@ -13,7 +13,7 @@ This file records implementation progress.
 | 4. Hover / completion | Complete | Added catalog-backed hover, PostgreSQL setting/value completion, HBA keyword completion, and LSP request tests. |
 | 5. Live oracle | Complete | Added supervised reconnecting Postgrex snapshots, live file-setting diagnostics, inlay hints and code actions with offline fallback. |
 | 6. CLI / packaging | Complete | Added `postern check`, plain/JSON output, Burrito targets and CI; all three target builds completed. |
-| 7. Editor smoke tests | In progress | Added Neovim and Helix smoke scripts. |
+| 7. Editor smoke tests | Complete | Neovim and Helix smoke scripts both pass with diagnostics from Postern. |
 
 ## Checks
 
@@ -32,7 +32,7 @@ This file records implementation progress.
 
 ## Current work item
 
-Run the editor smoke scripts in environments with the required clients.
+The editor smoke scripts pass when Neovim is given nvim-lspconfig and Helix is available.
 
 The final check must cover the requirements in `docs/original-brief.md` with
 source, tests, fixtures or command output.
