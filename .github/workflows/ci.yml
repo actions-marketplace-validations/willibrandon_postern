@@ -146,3 +146,19 @@ jobs:
         env:
           POSTERN_BIN: ${{ github.workspace }}/artifacts/binaries/postern_linux_x86_64
         run: nvim -l tests/minit.lua --busted
+
+  fresh:
+    name: Fresh bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: npm install --global @fresh-editor/fresh-editor@0.4.10
+      - run: npm ci
+        working-directory: editors/fresh
+      - run: npm run validate
+        working-directory: editors/fresh
+      - run: npm run check-types
+        working-directory: editors/fresh

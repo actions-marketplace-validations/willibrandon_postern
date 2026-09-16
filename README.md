@@ -44,6 +44,12 @@ lazy.nvim:
 It gives the four files their filetypes and enables the server, which must be on your `PATH`.
 See [editors/nvim/README.md](editors/nvim/README.md).
 
+### Fresh
+
+Fresh 0.4.10 or newer. Run `Package: Install from URL` with
+`https://github.com/willibrandon/postern#editors/fresh`. It highlights the four files and starts
+the server, which must be on your `PATH`. See [editors/fresh/README.md](editors/fresh/README.md).
+
 ### Helix
 
 ```toml

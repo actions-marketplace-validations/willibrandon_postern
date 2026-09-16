@@ -4,6 +4,9 @@
 
 - A Neovim plugin in `editors/nvim` for Neovim 0.11 or newer: filetypes for the four files and
   the server enabled through Neovim's own client, with no nvim-lspconfig needed.
+- A Fresh bundle in `editors/fresh` for Fresh 0.4.10 or newer: a grammar for the four files, their
+  names claimed when the bundle loads, and the server started through Fresh's own client. The
+  trust hint is a toggle in Fresh Settings.
 
 ## [0.1.5] - 2026-09-16
 

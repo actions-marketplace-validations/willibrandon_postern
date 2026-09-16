@@ -29,6 +29,21 @@ updates:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 10
+  - package-ecosystem: npm
+    directory: /editors/fresh
+    schedule:
+      interval: weekly
+      day: monday
+      time: "10:00"
+      timezone: America/Los_Angeles
+    groups:
+      npm-development:
+        dependency-type: development
+        update-types: [minor, patch]
+    ignore:
+      # Keep Node types aligned with the supported Node 24 toolchain.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

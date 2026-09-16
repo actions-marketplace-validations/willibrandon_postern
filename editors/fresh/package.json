@@ -1,0 +1,56 @@
+{
+  "$schema": "https://raw.githubusercontent.com/sinelaw/fresh/main/crates/fresh-editor/plugins/schemas/package.schema.json",
+  "name": "postern",
+  "version": "0.1.5",
+  "description": "PostgreSQL configuration files: highlighting for postgresql.conf, pg_hba.conf and pg_ident.conf, and the Postern language server",
+  "type": "bundle",
+  "author": "Brandon Williams",
+  "license": "MIT",
+  "repository": "https://github.com/willibrandon/postern",
+  "keywords": [
+    "fresh-editor",
+    "postgresql",
+    "postgresql.conf",
+    "pg_hba.conf",
+    "pg_ident.conf",
+    "lsp"
+  ],
+  "fresh": {
+    "min_version": "0.4.10",
+    "min_api_version": 2,
+    "languages": [
+      {
+        "id": "postgresql-conf",
+        "language": {
+          "commentPrefix": "#",
+          "autoIndent": false
+        },
+        "lsp": {
+          "command": "postern",
+          "args": [],
+          "autoStart": true
+        }
+      }
+    ],
+    "plugins": [
+      {
+        "entry": "plugin/postern.ts"
+      }
+    ]
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tests/tsconfig.json",
+    "check-plugin": "fresh --check-plugin plugin/postern.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "sync-types": "node scripts/sync-fresh-types.mjs",
+    "check-types": "node scripts/sync-fresh-types.mjs --check",
+    "validate": "npm run format:check && npm run typecheck && npm test && npm run check-plugin"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2"
+  }
+}
