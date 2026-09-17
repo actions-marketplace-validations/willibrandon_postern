@@ -1,7 +1,7 @@
 ;;; postgresql-conf-ts-mode.el --- Major mode for PostgreSQL configuration files  -*- lexical-binding: t; -*-
 
 ;; Author: Brandon Williams
-;; Version: 0.2.0
+;; Version: 0.2.1
 ;; Package-Requires: ((emacs "29.1"))
 ;; URL: https://github.com/willibrandon/postern
 ;; Keywords: languages

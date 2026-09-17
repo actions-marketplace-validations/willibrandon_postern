@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.1] - 2026-09-17
 
 - Paths are compared in one canonical form and a file URI carries a Windows drive the way
   editors write it, so include trees and the file next to a document resolve on Windows too.
