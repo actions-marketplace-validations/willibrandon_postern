@@ -298,3 +298,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release edit "$GITHUB_REF_NAME" --draft=false
+
+  zed:
+    name: Propose the Zed extension update
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: publish
+    steps:
+      # Opens the update pull request against zed-industries/extensions from
+      # the fork, with the submodule at this tag and the version to match.
+      - uses: huacnlee/zed-extension-action@v2
+        with:
+          extension-name: postgresql-conf
+          push-to: willibrandon/extensions
+        env:
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
