@@ -37,3 +37,7 @@ postern-*.tar
 
 # Neovim test harness state.
 /editors/nvim/.tests/
+
+# Emacs lock and auto-save files
+.#*
+\#*#
