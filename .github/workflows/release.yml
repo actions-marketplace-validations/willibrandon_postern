@@ -304,7 +304,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: publish
-    if: github.event_name == 'push' && github.ref_type == 'tag'
+    # Off until the extension is in the registry (zed-industries/extensions#7638).
+    # The action branches from upstream main and finds no entry to bump there.
+    # Put the condition back once that pull request merges.
+    # if: github.event_name == 'push' && github.ref_type == 'tag'
+    if: false
     steps:
       # Opens the update pull request against zed-industries/extensions from
       # the fork, with the submodule at this tag and the version to match.
