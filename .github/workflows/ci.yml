@@ -198,3 +198,26 @@ jobs:
       - run: rustup target add wasm32-wasip2
       - run: cargo build --release --target wasm32-wasip2
         working-directory: editors/zed
+
+  emacs:
+    name: Emacs mode
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: sudo apt-get install -y --no-install-recommends emacs-nox
+      - name: Build the tree-sitter parser
+        run: |
+          git clone --depth 1 https://github.com/willibrandon/tree-sitter-postgresql-conf "$RUNNER_TEMP/grammar"
+          mkdir -p "$RUNNER_TEMP/parser"
+          cc -shared -fPIC -I"$RUNNER_TEMP/grammar/src" "$RUNNER_TEMP/grammar/src/parser.c" -o "$RUNNER_TEMP/parser/libtree-sitter-postgresql-conf.so"
+      - name: Byte-compile without warnings
+        working-directory: editors/emacs
+        run: emacs -Q --batch -L . --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile postgresql-conf-ts-mode.el
+      - name: Run the tests
+        working-directory: editors/emacs
+        env:
+          POSTERN_PARSER_DIR: ${{ runner.temp }}/parser
+        run: emacs -Q --batch -L . -l tests/postgresql-conf-ts-mode-test.el -f ert-run-tests-batch-and-exit

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- An Emacs package in `editors/emacs`: a tree-sitter major mode for the four files with Imenu and
+  navigation, registered with Eglot for the server.
 - The Zed extension asks the release for the asset names it actually has when it downloads the
   server.
 

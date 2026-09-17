@@ -58,6 +58,12 @@ Append [editors/helix/languages.toml](editors/helix/languages.toml) to your `lan
 its queries under `runtime/queries/postgresql-conf`, then `hx --grammar fetch` and
 `hx --grammar build`. See [editors/helix/README.md](editors/helix/README.md).
 
+### Emacs
+
+Emacs 29.1 or newer. Load `editors/emacs` and require `postgresql-conf-ts-mode`; it owns the four
+files, highlights them through the tree-sitter grammar, and registers the server with Eglot. See
+[editors/emacs/README.md](editors/emacs/README.md).
+
 ### Zed
 
 Install [editors/zed](editors/zed) as a dev extension. It highlights the four files and downloads
