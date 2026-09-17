@@ -1,15 +1,15 @@
-id = "postern"
-name = "Postern"
-description = "PostgreSQL configuration files: highlighting for postgresql.conf, pg_hba.conf and pg_ident.conf, and the Postern language server."
+id = "postgresql-conf"
+name = "PostgreSQL Config"
 version = "0.1.7"
 schema_version = 1
 authors = ["Brandon Williams"]
+description = "Syntax highlighting, diagnostics, completion and hover help for PostgreSQL configuration files, through the Postern language server"
 repository = "https://github.com/willibrandon/postern"
-
-[grammars.postgresql_conf]
-repository = "https://github.com/willibrandon/tree-sitter-postgresql-conf"
-rev = "main"
 
 [language_servers.postern]
 name = "Postern"
 languages = ["PostgreSQL Config"]
+
+[grammars.postgresql_conf]
+repository = "https://github.com/willibrandon/tree-sitter-postgresql-conf"
+commit = "0bd95d45847c1c79a51a64c9cedabbfe56779488"

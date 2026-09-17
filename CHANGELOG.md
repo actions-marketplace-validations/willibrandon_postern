@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- The Zed extension is `postgresql-conf`, the id Zed's guidelines give a language extension, carries
+  its own license and references the grammar's 0.1.0 release, ready for the extension registry.
 - An Emacs package in `editors/emacs`: a tree-sitter major mode for the four files with Imenu and
   navigation, registered with Eglot for the server.
 - The Zed extension asks the release for the asset names it actually has when it downloads the

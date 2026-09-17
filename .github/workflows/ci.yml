@@ -182,7 +182,7 @@ jobs:
         run: |
           for query in "$GITHUB_WORKSPACE"/editors/nvim/queries/postgresql_conf/*.scm \
                        "$GITHUB_WORKSPACE"/editors/helix/queries/postgresql-conf/*.scm \
-                       "$GITHUB_WORKSPACE"/editors/zed/languages/postgresql-conf/*.scm; do
+                       "$GITHUB_WORKSPACE"/editors/zed/languages/postgresql_conf/*.scm; do
             echo "$query"
             npx --yes tree-sitter-cli query "$query" "$GITHUB_WORKSPACE"/test/fixtures/pg_hba.conf --quiet
           done
