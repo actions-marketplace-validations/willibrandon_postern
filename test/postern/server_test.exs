@@ -259,7 +259,7 @@ defmodule Postern.ServerTest do
         }
       })
 
-      Process.sleep(50)
+      assert_notification("textDocument/publishDiagnostics", %{"uri" => ^uri, "version" => 1})
       docs = server_assigns(server)[:documents]
       assert docs[uri].text == "shared_buffers = 128MB\n"
       assert docs[uri].version == 1
@@ -283,7 +283,7 @@ defmodule Postern.ServerTest do
         }
       })
 
-      Process.sleep(50)
+      assert_notification("textDocument/publishDiagnostics", %{"uri" => ^uri, "version" => 1})
       docs = server_assigns(server)[:documents]
       assert docs[uri].kind == :pg_hba_conf
     end
@@ -345,7 +345,7 @@ defmodule Postern.ServerTest do
         }
       })
 
-      Process.sleep(50)
+      assert_notification("textDocument/publishDiagnostics", %{"uri" => ^uri, "version" => 1})
 
       notify(client, %{
         "jsonrpc" => "2.0",
@@ -356,7 +356,7 @@ defmodule Postern.ServerTest do
         }
       })
 
-      Process.sleep(50)
+      assert_notification("textDocument/publishDiagnostics", %{"uri" => ^uri, "version" => 2})
       docs = server_assigns(server)[:documents]
       assert docs[uri].text == "shared_buffers = 256MB\n"
       assert docs[uri].version == 2
@@ -378,7 +378,7 @@ defmodule Postern.ServerTest do
         }
       })
 
-      Process.sleep(50)
+      assert_notification("textDocument/publishDiagnostics", %{"uri" => ^uri, "version" => 1})
       assert Map.has_key?(server_assigns(server)[:documents], uri)
 
       notify(client, %{
@@ -387,7 +387,8 @@ defmodule Postern.ServerTest do
         "params" => %{"textDocument" => %{"uri" => uri}}
       })
 
-      Process.sleep(50)
+      assert_notification("textDocument/publishDiagnostics", %{"uri" => ^uri, "diagnostics" => []})
+
       refute Map.has_key?(server_assigns(server)[:documents], uri)
     end
 
@@ -407,7 +408,7 @@ defmodule Postern.ServerTest do
         }
       })
 
-      Process.sleep(50)
+      assert_notification("textDocument/publishDiagnostics", %{"uri" => ^uri, "version" => 1})
 
       notify(client, %{
         "jsonrpc" => "2.0",
@@ -422,7 +423,7 @@ defmodule Postern.ServerTest do
         }
       })
 
-      Process.sleep(50)
+      assert_notification("textDocument/publishDiagnostics", %{"uri" => ^uri, "version" => 2})
       docs = server_assigns(server)[:documents]
       assert docs[uri].text == "b = 2\n"
       assert docs[uri].version == 2
@@ -453,8 +454,8 @@ defmodule Postern.ServerTest do
       directory: directory
     } do
       File.write!(Path.join(directory, "pg_ident.conf"), "known root postgres\n")
-      hba_uri = "file://" <> Path.join(directory, "pg_hba.conf")
-      ident_uri = "file://" <> Path.join(directory, "pg_ident.conf")
+      hba_uri = Postern.FileKind.path_to_uri(Path.join(directory, "pg_hba.conf"))
+      ident_uri = Postern.FileKind.path_to_uri(Path.join(directory, "pg_ident.conf"))
 
       missing = fn diagnostics ->
         for %{"message" => m} <- diagnostics, m =~ "does not exist", do: m
@@ -551,9 +552,9 @@ defmodule Postern.ServerTest do
       File.write!(Path.join(directory, "conf.d/10-memory.conf"), "shared_buffrs = 256MB\n")
 
       %{
-        root: "file://" <> Path.join(directory, "postgresql.conf"),
-        included: "file://" <> Path.join(directory, "conf.d/10-memory.conf"),
-        extra: "file://" <> Path.join(directory, "extra.conf")
+        root: Postern.FileKind.path_to_uri(Path.join(directory, "postgresql.conf")),
+        included: Postern.FileKind.path_to_uri(Path.join(directory, "conf.d/10-memory.conf")),
+        extra: Postern.FileKind.path_to_uri(Path.join(directory, "extra.conf"))
       }
     end
 
@@ -719,7 +720,8 @@ defmodule Postern.ServerTest do
         }
       })
 
-      Process.sleep(50)
+      uri = "file:///tmp/postgresql.conf"
+      assert_notification("textDocument/publishDiagnostics", %{"uri" => ^uri, "version" => 1})
       :ok
     end
 

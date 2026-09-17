@@ -284,9 +284,8 @@ defmodule Postern.Server do
   def handle_notification(%ExitNotification{}, lsp) do
     exit_code = Map.get(current_assigns(lsp), :exit_code, 0)
     test_mode = Map.get(current_assigns(lsp), :test_mode, false)
-    test_env = Code.ensure_loaded?(Mix) and Mix.env() == :test
 
-    unless test_mode or test_env do
+    unless test_mode do
       System.halt(exit_code)
     end
 
@@ -352,7 +351,11 @@ defmodule Postern.Server do
   defp opened_kind(lsp, uri, language_id) do
     with :unknown <- FileKind.detect(uri),
          :unknown <-
-           ConfigTree.kind_of(FileKind.uri_to_path(uri), reader(lsp), workspace: workspace(lsp)) do
+           ConfigTree.kind_of(
+             FileKind.canonical(FileKind.uri_to_path(uri)),
+             reader(lsp),
+             workspace: workspace(lsp)
+           ) do
       FileKind.detect(uri, language_id)
     end
   end
@@ -458,7 +461,7 @@ defmodule Postern.Server do
   defp workspace(lsp) do
     case Map.get(current_assigns(lsp), :root_uri) do
       nil -> nil
-      uri -> FileKind.uri_to_path(uri)
+      uri -> FileKind.canonical(FileKind.uri_to_path(uri))
     end
   end
 

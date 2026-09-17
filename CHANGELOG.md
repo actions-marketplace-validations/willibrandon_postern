@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased]
+
+- Paths are compared in one canonical form and a file URI carries a Windows drive the way
+  editors write it, so include trees and the file next to a document resolve on Windows too.
+- A configured server that is not there no longer holds up every request for the seconds
+  Postgrex waits before it drops a query from its queue. The live oracle takes the connection's
+  own notifications instead, so a check answers at once while the server is away, apart from
+  the first one after the language server starts, which waits up to two seconds for the
+  connection to come up.
+- CI and releases build on Elixir 1.20.4 and Erlang/OTP 28.5.0.6, and the suite runs on macOS
+  and Windows as well as Linux. `mix test` alone runs all of it on a fresh clone: the stdio
+  tests start their server from the test build, and the transport they need is a setting,
+  `config :postern, stdio: false`, that the test environment turns off.
+- A live server's rows about a file no longer crash its check. The oracle's text protocol sends
+  a line number as text, and the live diagnostics read it as a number.
+
 ## [0.2.0] - 2026-09-17
 
 - The Zed extension takes the grammar's 0.1.1 release, in which a single quote is an ordinary
