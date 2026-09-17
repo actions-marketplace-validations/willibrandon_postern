@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.0] - 2026-09-17
+
+- Files under a `conf.d` directory below a `postgresql` directory, Debian's `include_dir`, and
+  `postgresql.base.conf`, which Patroni keeps the original file as, open as PostgreSQL
+  configuration. A file no language claims by name or extension is taken when its first line is a
+  `# postern:` comment, and any file mapped to `postgresql-conf`, `pg-hba` or `pg-ident` in
+  `files.associations` is checked as that.
+- Bundles server 0.2.0, which follows `include`, `include_if_exists`, `include_dir` and
+  `postgresql.auto.conf` the way the server does. A setting a later file overrides gets a hint
+  naming the file and line that win, hover says where the value that counts is set, go to definition
+  goes there, and an include line links to its file. A `pg_hba.conf` rule is read and checked the
+  way hba.c does it, with the server's messages for the target version, and a line that ends with a
+  backslash goes on with the next one. `pg_hba.conf` and `pg_ident.conf` see each other from the
+  disk when only one is open.
+
 ## [0.1.7] - 2026-09-16
 
 - The trust quick fix command is registered by the language client, since the server now advertises

@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.0] - 2026-09-17
 
 - The Zed extension takes the grammar's 0.1.1 release, in which a single quote is an ordinary
   character in `pg_hba.conf` and `pg_ident.conf`, as it is to the server. The other packages

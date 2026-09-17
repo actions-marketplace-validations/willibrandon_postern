@@ -1,6 +1,6 @@
 id = "postgresql-conf"
 name = "PostgreSQL Config"
-version = "0.1.7"
+version = "0.2.0"
 schema_version = 1
 authors = ["Brandon Williams"]
 description = "Syntax highlighting, diagnostics, completion and hover help for PostgreSQL configuration files, through the Postern language server"
