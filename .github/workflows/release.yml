@@ -304,6 +304,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: publish
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     steps:
       # Opens the update pull request against zed-industries/extensions from
       # the fork, with the submodule at this tag and the version to match.
