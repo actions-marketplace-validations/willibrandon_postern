@@ -26,6 +26,9 @@
 (declare-function treesit-parser-create "treesit.c")
 (declare-function treesit-node-type "treesit.c")
 (declare-function treesit-node-child-by-field-name "treesit.c")
+;; Emacs 31 additions, used only when present.
+(declare-function treesit-ensure-installed "treesit" (lang))
+(defvar treesit-primary-parser)
 
 (defgroup postgresql-conf nil
   "PostgreSQL configuration files."
