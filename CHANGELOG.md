@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.0] - 2026-09-18
 
 - A documentation site at willibrandon.github.io/postern, which ExDoc builds from the README,
   the changelog, the editor notes and the module docs, a workflow publishes from main, and

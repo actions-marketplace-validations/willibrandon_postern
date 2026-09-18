@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0] - 2026-09-18
+
+- Bundles server 0.3.0. Values are read the way the server reads them, numbers with their units,
+  booleans, enums with the entries the server keeps hidden, and the strings the server checks with a
+  hook, so the editor shows what a reload would refuse; the settings of the contrib modules are in
+  the catalogs, and the postmaster's start checks run on the file. In `pg_hba.conf` an `@file` list
+  is followed, a regular expression is compiled the server's way, hover shows the manual's words for
+  each field, and a map name goes to and renames with its `pg_ident.conf` lines. Quick fixes replace
+  a misspelled name or unit, quote a value or drop a line an override makes useless, the outline
+  lists settings, rules and maps, a change on disk to a file a check reads checks the open documents
+  again, and a file the root includes reports its own problems while it is closed. With a
+  connection, the live rows land on the document their lines match, and the action writes the
+  setting under the cursor with `ALTER SYSTEM SET`. Nothing changes in the extension itself.
+
 ## [0.2.1] - 2026-09-17
 
 - Bundles server 0.2.1, which resolves an include tree and the file next to a document on Windows
