@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.1] - 2026-09-18
+
+- Bundles server 0.3.1, in which a `# postern: pg=16` comment at the top of a file overrides the
+  `postern.pg` setting, as the setting's description always said. Nothing changes in the extension
+  itself.
+
 ## [0.3.0] - 2026-09-18
 
 - Bundles server 0.3.0. Values are read the way the server reads them, numbers with their units,

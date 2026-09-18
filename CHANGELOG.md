@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.1] - 2026-09-18
 
 - The `# postern: pg=` comment at the top of a file wins over the `pg` option, as the settings
   always said. Each editor page lists the server's options, `pg`, `connectionString` and
