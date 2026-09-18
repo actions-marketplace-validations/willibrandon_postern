@@ -184,16 +184,19 @@ jobs:
           # An MSI version is three numbers, so a prerelease suffix is dropped
           $msiVersion = $env:VERSION -replace '-.*$', ''
           "msi_version=$msiVersion" >> $env:GITHUB_ENV
-      # WiX 5 is the last version that builds without accepting the Open
-      # Source Maintenance Fee agreement, which v7 refuses to run without.
       - name: Install WiX Toolset
-        run: dotnet tool install --global wix --version 5.0.2
+        run: dotnet tool install --global wix
+      # Since WiX 7 a build has to accept the Open Source Maintenance Fee
+      # agreement, whose id is wix followed by the major version. The fee
+      # binds organisations above $10,000 in annual revenue.
       - name: Build the MSI
         shell: pwsh
         env:
           VERSION: ${{ needs.verify.outputs.version }}
         run: |
+          $major = [regex]::Match((wix --version), '^\d+').Value
           wix build wix\postern.wxs `
+            -acceptEula "wix$major" `
             -d SourceDir=..\stage `
             -d Version=$env:msi_version `
             -arch x64 `
