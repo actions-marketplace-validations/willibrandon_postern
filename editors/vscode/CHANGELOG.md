@@ -3,9 +3,9 @@
 ## [0.2.1] - 2026-09-17
 
 - Bundles server 0.2.1, which resolves an include tree and the file next to a document on Windows
-  too, answers at once while a configured server is away rather than waiting on it at every
-  request, and no longer crashes on a live server's rows about an open file. Nothing changes in
-  the extension itself.
+  too, answers at once while a configured server is away rather than waiting on it at every request,
+  and no longer crashes on a live server's rows about an open file. Nothing changes in the extension
+  itself.
 
 ## [0.2.0] - 2026-09-17
 
