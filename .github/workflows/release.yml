@@ -824,3 +824,26 @@ jobs:
             gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$major" -f sha="$commit" >/dev/null
           fi
           echo "$major now points at $commit"
+
+  # The action is listed on the GitHub Marketplace as Postern Check, and a
+  # release shows up there on its own once the major tag has moved; this
+  # checks that it did.
+  marketplace:
+    name: Verify the Marketplace listing
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: action
+    if: "!contains(github.ref_name, '-')"
+    steps:
+      - name: Look for this release in the listing
+        run: |
+          for attempt in $(seq 1 12); do
+            page="$(curl -fsSL https://github.com/marketplace/actions/postern-check || true)"
+            if printf '%s' "$page" | grep -q 'href="/willibrandon/postern"' && printf '%s' "$page" | grep -q "$GITHUB_REF_NAME"; then
+              echo "The Marketplace lists Postern Check at $GITHUB_REF_NAME"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "The Marketplace does not list willibrandon/postern at $GITHUB_REF_NAME" >&2
+          exit 1

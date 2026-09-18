@@ -172,8 +172,9 @@ file it reads.
 
 ### GitHub Actions
 
-The action in this repository fetches the release for the runner and runs `check` with an
-annotation on every line the server would refuse:
+The action in this repository, [Postern Check](https://github.com/marketplace/actions/postern-check)
+on the Marketplace, fetches the release for the runner and runs `check` with an annotation on every
+line the server would refuse:
 
 ```yaml
 - uses: willibrandon/postern@v0
