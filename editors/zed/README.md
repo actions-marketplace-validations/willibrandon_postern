@@ -8,8 +8,16 @@ It also takes `postgresql.base.conf`, which Patroni keeps the original file as, 
 
 Install it from a checkout with `zed: install dev extension` in the command palette, choosing this directory. Zed compiles the extension, which needs a Rust toolchain.
 
-Initialization options go in Zed's settings. This one stops the hint about trust on non-local `pg_hba.conf` rules:
+## Settings
+
+The server's options go in Zed's settings under `lsp.postern.initialization_options`:
 
 ```json
-{ "lsp": { "postern": { "initialization_options": { "reportTrust": false } } } }
+{ "lsp": { "postern": { "initialization_options": { "pg": 16, "reportTrust": false } } } }
 ```
+
+| Option             | Default | Description                                                                                                                                                                                     |
+| ------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pg`               | newest  | PostgreSQL major version, 13 to 18, for offline checks. A `# postern: pg=16` comment at the top of a file overrides it.                                                                         |
+| `connectionString` | none    | `postgres://` URL of a server to check the open files against. Without it, `PGHOST` and the other libpq variables in the server's environment are used when set.                               |
+| `reportTrust`      | `true`  | Hint on `pg_hba.conf` rules that use `trust` or `password` on a non-local address. Loopback and `samehost` are never reported, and the quick fix on a hint turns this off until the server restarts. |

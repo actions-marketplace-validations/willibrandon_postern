@@ -9,3 +9,19 @@ Binaries are also on the [releases page](https://github.com/willibrandon/postern
 The entry also claims `postgresql.base.conf`, which Patroni keeps the original file as, and a `.conf` file under a `conf.d` directory below a `postgresql` directory, which is how Debian lays out an `include_dir`. For another layout, add a `glob` to `file-types`.
 
 `hx --health postgresql-conf` shows what Helix found.
+
+## Settings
+
+The server's options go in the `config` table of the language server entry in `languages.toml`, which Helix passes as initialization options:
+
+```toml
+[language-server.postern]
+command = "postern"
+config = { pg = 16, reportTrust = false }
+```
+
+| Option             | Default | Description                                                                                                                                                                                     |
+| ------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pg`               | newest  | PostgreSQL major version, 13 to 18, for offline checks. A `# postern: pg=16` comment at the top of a file overrides it.                                                                         |
+| `connectionString` | none    | `postgres://` URL of a server to check the open files against. Without it, `PGHOST` and the other libpq variables in the server's environment are used when set.                               |
+| `reportTrust`      | `true`  | Hint on `pg_hba.conf` rules that use `trust` or `password` on a non-local address. Loopback and `samehost` are never reported, and the quick fix on a hint turns this off until the server restarts. |

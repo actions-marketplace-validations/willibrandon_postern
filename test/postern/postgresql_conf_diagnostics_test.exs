@@ -404,4 +404,13 @@ defmodule Postern.PostgresqlConfDiagnosticsTest do
     |> Path.join(name)
     |> File.read!()
   end
+
+  test "the version comment at the top of a file wins over the pg option" do
+    versions = [13, 14, 15, 16, 17, 18]
+    text = "# postern: pg=16\n"
+    assert Postern.PostgresqlConfDiagnostics.target_version(text, %{"pg" => 18}, versions) == 16
+
+    assert Postern.PostgresqlConfDiagnostics.target_version("port = 1\n", %{"pg" => 18}, versions) ==
+             18
+  end
 end

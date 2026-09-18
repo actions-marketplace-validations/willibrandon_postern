@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+- The `# postern: pg=` comment at the top of a file wins over the `pg` option, as the settings
+  always said. Each editor page lists the server's options, `pg`, `connectionString` and
+  `reportTrust`, in that editor's form, and the Emacs mode takes them from
+  `postgresql-conf-ts-mode-server-options`.
+
 ## [0.3.0] - 2026-09-18
 
 - A documentation site at willibrandon.github.io/postern, which ExDoc builds from the README,

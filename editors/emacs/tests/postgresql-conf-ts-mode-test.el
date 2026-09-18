@@ -98,6 +98,13 @@
           (should (equal (postgresql-conf-ts-mode-server-program) '("postern")))
         (should (equal (postgresql-conf-ts-mode-server-program) (list path)))))))
 
+(ert-deftest postgresql-conf-ts-mode-passes-the-server-options-to-eglot ()
+  (let ((postgresql-conf-ts-mode-server-options nil))
+    (should (= (length (postgresql-conf-ts-mode-server-program)) 1)))
+  (let ((postgresql-conf-ts-mode-server-options '(:pg 16 :reportTrust :json-false)))
+    (should (equal (cdr (postgresql-conf-ts-mode-server-program))
+                   '(:initializationOptions (:pg 16 :reportTrust :json-false))))))
+
 (ert-deftest postgresql-conf-ts-mode-names-the-release-asset-for-this-platform ()
   (let ((asset (postgresql-conf-ts-mode--release-asset "0.2.1")))
     (should (string-prefix-p "postern-0.2.1-" asset))

@@ -17,13 +17,21 @@ or with `package-vc-install`:
 
 The parser is a library Emacs compiles from the grammar. `M-x postgresql-conf-ts-mode-install-grammar` builds it into `~/.emacs.d/tree-sitter/`, which needs Git and a C compiler; Emacs 31 offers to do that the first time the mode opens a file. Until then the mode only knows the comment syntax.
 
-Start the server with `M-x eglot`, or add `postgresql-conf-ts-mode-hook` to `eglot-ensure`. The quick fix on a trust hint is an ordinary code action, `M-x eglot-code-actions`. To turn those hints off for good:
+Start the server with `M-x eglot`, or add `postgresql-conf-ts-mode-hook` to `eglot-ensure`. Code actions, the quick fixes among them, are `M-x eglot-code-actions`.
+
+## Settings
+
+The server's options are `postgresql-conf-ts-mode-server-options`, a plist Eglot passes as initialization options, with `:json-false` for false:
 
 ```elisp
-(with-eval-after-load 'eglot
-  (add-to-list 'eglot-server-programs
-               '(postgresql-conf-ts-mode . ("postern" :initializationOptions (:reportTrust :json-false)))))
+(setq postgresql-conf-ts-mode-server-options '(:pg 16 :reportTrust :json-false))
 ```
+
+| Option             | Default | Description                                                                                                                                                                                     |
+| ------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pg`               | newest  | PostgreSQL major version, 13 to 18, for offline checks. A `# postern: pg=16` comment at the top of a file overrides it.                                                                         |
+| `connectionString` | none    | `postgres://` URL of a server to check the open files against. Without it, `PGHOST` and the other libpq variables in the server's environment are used when set.                               |
+| `reportTrust`      | `true`  | Hint on `pg_hba.conf` rules that use `trust` or `password` on a non-local address. Loopback and `samehost` are never reported, and the quick fix on a hint turns this off until the server restarts. |
 
 Tests run in batch and need `POSTERN_PARSER_DIR` pointing at a directory with the compiled grammar library:
 

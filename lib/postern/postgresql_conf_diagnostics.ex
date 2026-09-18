@@ -54,8 +54,8 @@ defmodule Postern.PostgresqlConfDiagnostics do
     from_comment = comment_version(text)
 
     cond do
-      configured in versions -> configured
       from_comment in versions -> from_comment
+      configured in versions -> configured
       versions == [] -> raise "no PostgreSQL catalogs are available"
       true -> List.last(versions)
     end

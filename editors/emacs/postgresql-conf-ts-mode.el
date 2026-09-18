@@ -201,6 +201,15 @@ Eglot runs the Postern language server."
   :type 'directory
   :group 'postgresql-conf-ts-mode)
 
+(defcustom postgresql-conf-ts-mode-server-options nil
+  "Initialization options Eglot passes to the server, as a plist.
+`:pg' is the PostgreSQL major version for offline checks,
+`:connectionString' the postgres:// URL of a server to check the files
+against, and `:reportTrust' `:json-false' turns off the hint on trust or
+password authentication for non-local pg_hba.conf rules."
+  :type 'sexp
+  :group 'postgresql-conf-ts-mode)
+
 (defun postgresql-conf-ts-mode--installed-server ()
   "The path of the server `postgresql-conf-ts-mode-install-server' fetches."
   (expand-file-name (if (eq system-type 'windows-nt) "postern.exe" "postern")
@@ -210,11 +219,15 @@ Eglot runs the Postern language server."
   "The command Eglot starts the server with.
 `postern' on the PATH when it is there, otherwise the binary
 `postgresql-conf-ts-mode-install-server' fetched, otherwise `postern'
-for Eglot to report as missing."
-  (cond ((executable-find "postern") '("postern"))
-        ((file-executable-p (postgresql-conf-ts-mode--installed-server))
-         (list (postgresql-conf-ts-mode--installed-server)))
-        (t '("postern"))))
+for Eglot to report as missing, followed by
+`postgresql-conf-ts-mode-server-options' when there are any."
+  (let ((program (cond ((executable-find "postern") "postern")
+                       ((file-executable-p (postgresql-conf-ts-mode--installed-server))
+                        (postgresql-conf-ts-mode--installed-server))
+                       (t "postern"))))
+    (if postgresql-conf-ts-mode-server-options
+        (list program :initializationOptions postgresql-conf-ts-mode-server-options)
+      (list program))))
 
 (defun postgresql-conf-ts-mode--release-asset (version)
   "The release asset name for this platform at VERSION."
