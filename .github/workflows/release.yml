@@ -816,11 +816,8 @@ jobs:
             *) echo "Expected a release tag, got $GITHUB_REF_NAME" >&2; exit 1 ;;
           esac
           major="${GITHUB_REF_NAME%%.*}"
-          commit="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$GITHUB_REF_NAME" --jq '.object.sha')"
-          if [ "$(gh api "repos/$GITHUB_REPOSITORY/git/commits/$commit" --jq .sha 2>/dev/null)" = "" ]; then
-            # An annotated tag points at a tag object; the action wants the commit
-            commit="$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$commit" --jq '.object.sha')"
-          fi
+          # The commit the release tag points at, not the tag object itself
+          commit="$GITHUB_SHA"
           if existing="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$major" --jq '.object.sha' 2>/dev/null)"; then
             [ "$existing" = "$commit" ] || gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$major" -f sha="$commit" -F force=true >/dev/null
           else
