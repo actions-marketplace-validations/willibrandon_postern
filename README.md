@@ -91,7 +91,9 @@ Or download a binary for your platform from the
 `postern`. The binary is self-contained; it unpacks the Erlang runtime into your user data
 directory on first run.
 
-Visual Studio Code users can install the Postern extension from the
+### Visual Studio Code
+
+Install the Postern extension from the
 [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=willibrandon.postern)
 or [Open VSX](https://open-vsx.org/extension/willibrandon/postern). It bundles the binary; see the
 [extension page](https://willibrandon.github.io/postern/vscode.html) for its settings.
