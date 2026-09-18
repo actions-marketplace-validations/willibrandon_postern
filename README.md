@@ -120,7 +120,7 @@ the server, which must be on your `PATH`. See the
 
 ### Helix
 
-Append [editors/helix/languages.toml](editors/helix/languages.toml) to your `languages.toml`, put
+Append [editors/helix/languages.toml](https://github.com/willibrandon/postern/blob/main/editors/helix/languages.toml) to your `languages.toml`, put
 its queries under `runtime/queries/postgresql-conf`, then `hx --grammar fetch` and
 `hx --grammar build`. See the
 [Helix page](https://willibrandon.github.io/postern/helix.html).
