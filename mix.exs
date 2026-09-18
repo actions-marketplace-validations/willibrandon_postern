@@ -54,6 +54,7 @@ defmodule Postern.MixProject do
         {"editors/emacs/README.md", filename: "emacs", title: "Emacs"},
         {"editors/zed/README.md", filename: "zed", title: "Zed"},
         "CHANGELOG.md",
+        "CONTRIBUTING.md",
         "SECURITY.md"
       ],
       groups_for_extras: [Editors: ~r"editors/"],

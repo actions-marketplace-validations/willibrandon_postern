@@ -214,7 +214,8 @@ so in one informational diagnostic.
 
 ## Development
 
-Requires Elixir 1.18 or newer on Erlang/OTP 27 or newer.
+Requires Elixir 1.18 or newer on Erlang/OTP 27 or newer. [CONTRIBUTING.md](CONTRIBUTING.md) says
+what a change needs before it goes in.
 
 ```sh
 mix deps.get
