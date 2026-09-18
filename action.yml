@@ -1,5 +1,5 @@
-name: Postern
-description: Checks postgresql.conf, pg_hba.conf and pg_ident.conf the way the PostgreSQL server reads them, with an annotation on each line it would refuse.
+name: Postern Check
+description: Checks postgresql.conf, pg_hba.conf and pg_ident.conf the way the PostgreSQL server reads them.
 author: willibrandon
 branding:
   icon: check-circle
