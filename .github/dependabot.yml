@@ -44,6 +44,13 @@ updates:
       # Keep Node types aligned with the supported Node 24 toolchain.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+  - package-ecosystem: cargo
+    directory: /editors/zed
+    schedule:
+      interval: weekly
+      day: monday
+      time: "10:00"
+      timezone: America/Los_Angeles
   - package-ecosystem: github-actions
     directory: /
     schedule:
